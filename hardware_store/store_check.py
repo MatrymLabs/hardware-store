@@ -217,7 +217,8 @@ def _contains_word(text: str, word: str) -> bool:
 
 # --- Orchestration -----------------------------------------------------------
 
-def run_check(root: Path, fleet_root: Path, threshold: int, run_tests: bool) -> sl.Report:
+def run_check(root: Path, fleet_root: Path, threshold: int, run_tests: bool,
+              check_consumers: bool = True) -> sl.Report:
     report = sl.Report()
     entries = check_registry(root, report)
     cards = check_cards(root, report)
@@ -227,7 +228,11 @@ def run_check(root: Path, fleet_root: Path, threshold: int, run_tests: bool) -> 
     check_impls(root, cards, report)
     check_tests(root, cards, run_tests, report)
     check_certified_gate(cards, threshold, report)
-    check_consumers_resolve(cards, fleet_root, report)
+    if check_consumers:
+        # consumer-resolution needs the consuming fleet repos on disk under fleet_root; CI (which
+        # checks out only the Store) skips it via --no-fleet. certified-gate above still enforces
+        # that each CERTIFIED card DECLARES a real consumer + mutation + rd_certification.
+        check_consumers_resolve(cards, fleet_root, report)
     check_no_deprecated_vocab(root, report)
     return report
 
@@ -256,12 +261,17 @@ def main(argv: list[str] | None = None) -> int:
                         help="minimum mutation score for CERTIFIED parts")
     parser.add_argument("--no-run-tests", action="store_true",
                         help="check that contract tests EXIST but do not run them")
+    parser.add_argument("--no-fleet", action="store_true",
+                        help="skip consumer-resolution (for CI, where the consuming fleet repos "
+                             "are not checked out); Store-internal integrity and that each "
+                             "certified card DECLARES a consumer are still enforced")
     parser.add_argument("--json", action="store_true", help="emit findings as JSON")
     args = parser.parse_args(argv)
 
     root = args.root.resolve()
     fleet_root = (args.fleet_root or root.parent).resolve()
-    report = run_check(root, fleet_root, args.threshold, run_tests=not args.no_run_tests)
+    report = run_check(root, fleet_root, args.threshold, run_tests=not args.no_run_tests,
+                       check_consumers=not args.no_fleet)
 
     if args.json:
         print(json.dumps({

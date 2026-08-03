@@ -22,4 +22,4 @@ jobs:
       - name: test
         run: pytest -q
       - name: store-check (integrity gate)
-        run: store-check
+        run: store-check --no-fleet
