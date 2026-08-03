@@ -11,9 +11,10 @@ The Store is an outward-facing dependency. A stream installs it (pinned):
 pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@<tag>"
 ```
 
-That puts the `store-*` verbs on PATH and vendors `registry.json` (the index a stream
-queries). Individual Parts are consumed from `catalog/<slug>/impl/<lang>/` at a pinned
-Part `version` from the card.
+That puts the `store-*` verbs on PATH. The catalog index (`registry.json`) is fetched
+from the same pinned tag (`raw.githubusercontent.com/.../<tag>/registry.json`), so the
+tool and the catalog move together. Individual Parts are consumed from
+`catalog/<slug>/impl/<lang>/` at a pinned Part `version` from the card.
 
 ## The steps (commands, not prose)
 
