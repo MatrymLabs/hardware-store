@@ -1,0 +1,102 @@
+"""store_search -- search the catalog by capability, and record that you looked.
+
+Consume-first is a law, not a hope: before a stream implements a capability it
+searches the Store, and the search is logged. Reimplementing a catalogued
+capability without a documented reason is a CI-detectable defect (Phase 2). This
+tool is the front door to that discipline.
+
+    python -m tools.store_search "rate limiting" [--category Operations]
+                                 [--language python] [--repo my-repo] [--json]
+
+Matches are ranked by where the term hits (capability > name > category). Every
+query is appended to ``intake/search_log.jsonl`` so the record exists.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from tools import store_lib as sl
+else:
+    from . import store_lib as sl
+
+
+def search(cards: list[sl.Card], term: str, category: str | None,
+           language: str | None) -> list[tuple[int, sl.Card]]:
+    """Return (score, card) for cards matching the query, best score first."""
+    needle = term.lower().strip()
+    hits: list[tuple[int, sl.Card]] = []
+    for card in cards:
+        if category and card.data.get("category") != category:
+            continue
+        if language and language not in card.languages:
+            continue
+        score = 0
+        if needle:
+            if needle in str(card.data.get("capability", "")).lower():
+                score += 3
+            if needle in card.canonical_name.lower() or needle in card.slug.lower():
+                score += 2
+            if needle in str(card.data.get("category", "")).lower():
+                score += 1
+            if score == 0:
+                continue
+        hits.append((score, card))
+    return sorted(hits, key=lambda sc: (-sc[0], sc[1].slug))
+
+
+def log_query(root: Path, term: str, category: str | None, language: str | None,
+              repo: str | None, result_count: int, stamp: str) -> Path:
+    """Append the query to the search log so 'we looked' is a record, not a claim."""
+    log_path = root / "intake" / "search_log.jsonl"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    entry = {
+        "when": stamp, "repo": repo or "unknown", "term": term,
+        "category": category, "language": language, "results": result_count,
+    }
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry, sort_keys=True) + "\n")
+    return log_path
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Search the Hardware Store catalog.")
+    default_root = Path(__file__).resolve().parent.parent
+    parser.add_argument("term", nargs="?", default="", help="capability search term")
+    parser.add_argument("--root", type=Path, default=default_root)
+    parser.add_argument("--category", default=None, choices=(None, *sl.CATEGORIES))
+    parser.add_argument("--language", default=None, help="filter by implementation language")
+    parser.add_argument("--repo", default=None, help="the searching repo (recorded in the log)")
+    parser.add_argument("--when", default=None,
+                        help="ISO timestamp for the log entry (default: 'unstamped'; "
+                             "callers/CI pass the real time so the tool stays deterministic)")
+    parser.add_argument("--no-log", action="store_true", help="do not record the query")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+
+    root = args.root.resolve()
+    cards = sl.load_cards(root / "catalog")
+    results = search(cards, args.term, args.category, args.language)
+
+    if not args.no_log:
+        log_query(root, args.term, args.category, args.language, args.repo,
+                  len(results), args.when or "unstamped")
+
+    if args.json:
+        print(json.dumps([sl.registry_entry(c) for _, c in results], indent=2))
+    else:
+        if not results:
+            print(f"no catalogued Part matches '{args.term}' "
+                  "(if you build one, that's a submission, not a duplicate)")
+        for _score, card in results:
+            print(f"  [{card.maturity:9}] {card.slug} :: {card.data.get('capability', '')}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

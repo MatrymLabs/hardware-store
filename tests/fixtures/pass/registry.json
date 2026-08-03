@@ -1,0 +1,15 @@
+[
+  {
+    "part_id": "PRT-EX01",
+    "slug": "example-reverser",
+    "canonical_name": "example_reverser",
+    "capability": "Example fixture capability: reverse a string, proving the checker (not real content).",
+    "category": "Pattern",
+    "maturity": "CANDIDATE",
+    "languages": [
+      "python"
+    ],
+    "consumers": [],
+    "version": "0.1.0"
+  }
+]
