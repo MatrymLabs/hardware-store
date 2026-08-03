@@ -26,15 +26,15 @@ lint:
 	$(PY) -m ruff check .
 
 typecheck:
-	$(PY) -m mypy tools
+	$(PY) -m mypy hardware_store
 
 test:
 	$(PY) -m pytest -q
 
 store-check:
-	$(PY) -m tools.store_check
+	$(PY) -m hardware_store.store_check
 
 check: lint typecheck test store-check
 
 search:
-	$(PY) -m tools.store_search "$(q)"
+	$(PY) -m hardware_store.store_search "$(q)"

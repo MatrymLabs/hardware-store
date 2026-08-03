@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "matrym-hardware-store"
-version = "0.1.0"
+version = "0.2.0"
 description = "The Matrym Labs Hardware Store: the fleet's certified catalog of reusable engineering capability."
 requires-python = ">=3.11"
 # Zero runtime dependencies by design: cards are TOML (stdlib tomllib),
@@ -9,6 +13,21 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+# The Store is an outward-facing dependency: a stream installs it and runs these
+# verbs in CI. Console scripts are the consume-first / integrity surface.
+[project.scripts]
+store-check = "hardware_store.store_check:main"
+store-search = "hardware_store.store_search:main"
+store-consume = "hardware_store.consume:main"
+store-promote = "hardware_store.promote:main"
+store-consume-first = "hardware_store.consume_first:main"
+
+[tool.setuptools]
+packages = ["hardware_store"]
+
+[tool.setuptools.package-data]
+hardware_store = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

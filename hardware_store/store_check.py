@@ -2,7 +2,7 @@
 
 Run it against a Store root; it returns a verdict, never a shrug:
 
-    python -m tools.store_check [--root DIR] [--fleet-root DIR]
+    python -m hardware_store.store_check [--root DIR] [--fleet-root DIR]
                                [--threshold N] [--no-run-tests] [--json]
 
 Checks (each one has a sabotage fixture that watches it fail; a checker you never
@@ -30,10 +30,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Allow both ``python -m tools.store_check`` and ``python tools/store_check.py``.
+# Allow both ``python -m hardware_store.store_check`` and ``python tools/store_check.py``.
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from tools import store_lib as sl
+    from hardware_store import store_lib as sl
 else:
     from . import store_lib as sl
 

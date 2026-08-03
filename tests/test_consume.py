@@ -5,8 +5,8 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from tools import consume
-from tools import store_lib as sl
+from hardware_store import consume
+from hardware_store import store_lib as sl
 
 PASS_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "pass"
 PART = "example-reverser"

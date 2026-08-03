@@ -200,3 +200,10 @@ def canonical_registry(entries: list[dict]) -> str:
     """A stable string form of the registry for exact mirror comparison."""
     return json.dumps(sorted(entries, key=lambda e: e.get("part_id", "")),
                       sort_keys=True, indent=2)
+
+
+def write_registry(root: Path) -> list[dict]:
+    """Rebuild registry.json from the catalog so it mirrors the cards. Returns it."""
+    entries = build_registry(load_cards(root / "catalog"))
+    (root / "registry.json").write_text(json.dumps(entries, indent=2) + "\n", encoding="utf-8")
+    return entries

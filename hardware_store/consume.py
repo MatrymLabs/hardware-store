@@ -5,7 +5,7 @@ least one real consumer. When a stream depends on a Part (pinned by version),
 it runs this to append itself to the card's ``current_consumers`` table, so the
 card tells the truth about who relies on it.
 
-    python -m tools.consume <slug> --repo my-repo \\
+    python -m hardware_store.consume <slug> --repo my-repo \\
         --path my-repo/src/foo.py --version 0.1.0
 
 This mutates the CARD.md front-matter only (append a ``[[current_consumers]]``
@@ -20,7 +20,7 @@ from pathlib import Path
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from tools import store_lib as sl
+    from hardware_store import store_lib as sl
 else:
     from . import store_lib as sl
 
@@ -80,8 +80,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"no such Part: {args.slug} (expected {card_path})", file=sys.stderr)
         return 2
     status = record_consumption(card_path, args.repo, args.path, args.version, args.when)
+    if status == "recorded":
+        sl.write_registry(args.root.resolve())  # keep registry.json mirroring the cards
     print(f"{status}: {args.repo} -> {args.slug} @ {args.version}")
-    print("note: run 'store_check' and rebuild registry.json; certification remains R&D's gate")
+    print("note: run 'store-check' to confirm green; certification remains R&D's gate")
     return 0
 
 

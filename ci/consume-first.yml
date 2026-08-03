@@ -1,0 +1,44 @@
+# Drop-in consume-first gate for a stream repo (codeforge, ai-log-triage, FGL).
+# Copy this into the stream's .github/workflows/. It fails a PR that reimplements
+# a catalogued capability without a logged store_search or a DECISION: override.
+#
+# It depends on the Hardware Store as an outward-facing dependency:
+#   pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@main"
+# which puts the store-* console scripts on PATH and vendors registry.json.
+name: consume-first
+
+on:
+  pull_request:
+
+jobs:
+  consume-first:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0                       # need the merge base for the diff
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: install the Hardware Store
+        run: pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@main"
+      - name: locate the Store's registry (the catalog this repo must consume from)
+        id: store
+        run: |
+          root=$(python -c "import hardware_store, pathlib; print(pathlib.Path(hardware_store.__file__).resolve().parent.parent)")
+          echo "registry=$root/registry.json" >> "$GITHUB_OUTPUT"
+      - name: compute changed files
+        id: diff
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          echo "files=$(git diff --name-only "$base"...HEAD -- '*.py' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+      # The search log is REPO-LOCAL and committed: developers record their looks with
+      #   store-search "<capability>" --repo <this-repo> --log-file .hardware-store/search_log.jsonl
+      # and commit .hardware-store/search_log.jsonl. That is the "prove you looked" record.
+      - name: consume-first gate
+        run: |
+          store-consume-first \
+            --registry "${{ steps.store.outputs.registry }}" \
+            --search-log .hardware-store/search_log.jsonl \
+            --repo "${{ github.event.repository.name }}" \
+            --changed ${{ steps.diff.outputs.files }}

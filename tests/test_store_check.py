@@ -11,8 +11,8 @@ import json
 import shutil
 from pathlib import Path
 
-from tools import store_check as sc
-from tools import store_lib as sl
+from hardware_store import store_check as sc
+from hardware_store import store_lib as sl
 
 PASS_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "pass"
 PART = "example-reverser"
