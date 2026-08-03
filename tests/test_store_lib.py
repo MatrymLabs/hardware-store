@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from tools import store_lib as sl
+from hardware_store import store_lib as sl
 
 PASS_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "pass"
 

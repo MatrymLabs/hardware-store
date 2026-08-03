@@ -13,19 +13,30 @@ contract is **[docs/CARD_SCHEMA.md](docs/CARD_SCHEMA.md)**.
 ```
 STORE.md          charter: the five laws, lifecycle, how to consume / submit
 catalog/          the certified Parts (one dir per capability; empty until Phase 3)
-registry.json     machine-readable index; store_check proves it mirrors catalog/
+registry.json     machine-readable index; store-check proves it mirrors catalog/
 intake/           submission staging: candidates awaiting an R&D verdict
-tools/            store_search (find + log), store_check (the gate), consume (record adoption)
-docs/             CARD_SCHEMA.md, CARD_TEMPLATE.md
+hardware_store/   the installable package: the store-* console verbs
+docs/             CARD_SCHEMA, CARD_TEMPLATE, SUBMISSION, CONSUMPTION, STREAM_INTEGRATION
+ci/               consume-first.yml, the drop-in gate each stream repo adds
 tests/            proof the tooling works, incl. sabotage tests for every check
 ```
+
+## Verbs (installable console scripts)
+
+| verb | what it does |
+|---|---|
+| `store-search` | search the catalog by capability; logs the query (prove you looked) |
+| `store-check` | the integrity gate (the no-graveyard law) |
+| `store-consume` | record a repo's adoption on a Part's card |
+| `store-promote` | move an R&D-certified candidate from `intake/` to `catalog/` |
+| `store-consume-first` | the stream-side CI gate against silent reimplementation |
 
 ## Run it
 
 ```bash
-make env          # create .venv, install dev tools (pytest, ruff, mypy)
+make env          # create .venv, install the package + dev tools
 make check        # lint + typecheck + test + store-check (the full gate)
-make store-check  # just the integrity gate over the Store
+pip install -e .  # or install the package; the store-* verbs land on PATH
 make search q="rate limiting"
 ```
 
@@ -35,7 +46,11 @@ their own provenance.
 
 ## Status
 
-Phase 1 complete: the Store core and its three tools exist and are proven on a
-fixture (green fixture passes; sabotaged copies fail on the exact broken check). The
-catalog is intentionally empty; real Parts arrive in Phase 3 as CANDIDATEs and are
-certified by R&D.
+Phase 2 complete: the Store core and five console verbs exist and are proven. The
+integrity gate passes a good fixture and fails a sabotaged copy on the exact broken
+check; the submission pipeline (`store-promote`) refuses uncertified candidates and
+promotes certified ones; the consume-first CI gate (`store-consume-first`) fails a
+probable reimplementation unless a logged search or a `DECISION:` override resolves
+it. The catalog is intentionally empty; real Parts arrive in Phase 3 as CANDIDATEs and
+are certified by R&D (Phase 4 walks the retry + circuit-breaker pair through the full
+loop and consolidates the ai-log-triage / FGL duplicates).

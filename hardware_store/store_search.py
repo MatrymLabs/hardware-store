@@ -5,7 +5,7 @@ searches the Store, and the search is logged. Reimplementing a catalogued
 capability without a documented reason is a CI-detectable defect (Phase 2). This
 tool is the front door to that discipline.
 
-    python -m tools.store_search "rate limiting" [--category Operations]
+    python -m hardware_store.store_search "rate limiting" [--category Operations]
                                  [--language python] [--repo my-repo] [--json]
 
 Matches are ranked by where the term hits (capability > name > category). Every
@@ -21,7 +21,7 @@ from pathlib import Path
 
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-    from tools import store_lib as sl
+    from hardware_store import store_lib as sl
 else:
     from . import store_lib as sl
 
@@ -51,9 +51,14 @@ def search(cards: list[sl.Card], term: str, category: str | None,
 
 
 def log_query(root: Path, term: str, category: str | None, language: str | None,
-              repo: str | None, result_count: int, stamp: str) -> Path:
-    """Append the query to the search log so 'we looked' is a record, not a claim."""
-    log_path = root / "intake" / "search_log.jsonl"
+              repo: str | None, result_count: int, stamp: str,
+              log_file: Path | None = None) -> Path:
+    """Append the query to the search log so 'we looked' is a record, not a claim.
+
+    A stream repo passes ``log_file`` to write into its own committed log (which its
+    consume-first CI reads); the Store itself uses the default ``intake/`` log.
+    """
+    log_path = log_file if log_file is not None else root / "intake" / "search_log.jsonl"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     entry = {
         "when": stamp, "repo": repo or "unknown", "term": term,
@@ -72,6 +77,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--category", default=None, choices=(None, *sl.CATEGORIES))
     parser.add_argument("--language", default=None, help="filter by implementation language")
     parser.add_argument("--repo", default=None, help="the searching repo (recorded in the log)")
+    parser.add_argument("--log-file", type=Path, default=None,
+                        help="write the query here instead of the Store's intake/ log "
+                             "(a stream points this at its own committed log)")
     parser.add_argument("--when", default=None,
                         help="ISO timestamp for the log entry (default: 'unstamped'; "
                              "callers/CI pass the real time so the tool stays deterministic)")
@@ -85,7 +93,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.no_log:
         log_query(root, args.term, args.category, args.language, args.repo,
-                  len(results), args.when or "unstamped")
+                  len(results), args.when or "unstamped", log_file=args.log_file)
 
     if args.json:
         print(json.dumps([sl.registry_entry(c) for _, c in results], indent=2))

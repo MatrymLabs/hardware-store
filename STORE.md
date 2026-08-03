@@ -6,8 +6,8 @@ every future product is assembled from it. When CodeForge designs a game, a
 classroom, or a course, it discovers Parts here first. The Store is multi-stack and
 language-extensible by design.
 
-This charter is enforced by tooling, not by memory. `tools/store_check.py` is the
-law; a red check is a fleet alarm, not a warning.
+This charter is enforced by tooling, not by memory. `hardware_store/store_check.py`
+(the `store-check` verb) is the law; a red check is a fleet alarm, not a warning.
 
 ## The five laws (each is a mechanism, not a slogan)
 
@@ -48,20 +48,24 @@ legally lack a certification, consumers, and a mutation score; those become mand
 at CERTIFIED. FLEET_CORE (two products agreeing on one contract) needs founder
 approval.
 
-## How to consume a Part
+## How to consume a Part (full pipeline: `docs/CONSUMPTION.md`)
 
-1. `make search q="<capability>"` (or `python -m tools.store_search "<capability>"`).
-   The query is logged. If a Part matches, depend on it at a pinned version.
+1. `store-search "<capability>" --repo <you> --log-file .hardware-store/search_log.jsonl`
+   and commit the log. The query is recorded ("prove you looked"). If a Part matches,
+   depend on it at a pinned version.
 2. Record your adoption so the card tells the truth about who relies on it:
-   `python -m tools.consume <slug> --repo <you> --path <path/that/imports/it> --version <v>`
-3. Add `store_check` to your repo's CI (integration snippet lands in Phase 2).
+   `store-consume <slug> --repo <you> --path <path/that/imports/it> --version <v>`
+3. Add the consume-first gate to your CI: copy `ci/consume-first.yml` (see
+   `docs/STREAM_INTEGRATION.md`). It fails a PR that rebuilds a catalogued capability
+   without a logged search or a `DECISION:` override.
 
-## How to submit a Part
+## How to submit a Part (full pipeline: `docs/SUBMISSION.md`)
 
 Stage `intake/<slug>/` as a full candidate (implementation + draft `CARD.md` +
 `contract/` + `tests/` + a benchmark), then hand it to the R&D Factory. See
 `docs/CARD_SCHEMA.md` for the card contract and `docs/CARD_TEMPLATE.md` to start one.
-R&D's `HARDWARE_STORE_PART` verdict is the only thing that promotes it.
+R&D's `HARDWARE_STORE_PART` verdict is the only thing that promotes it, via
+`store-promote <slug>` (which refuses anything R&D has not certified).
 
 ## The card contract
 

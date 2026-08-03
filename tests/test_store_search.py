@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tools import store_lib as sl
-from tools import store_search as ss
+from hardware_store import store_lib as sl
+from hardware_store import store_search as ss
 
 PASS_FIXTURE = Path(__file__).resolve().parent / "fixtures" / "pass"
 
@@ -49,3 +49,11 @@ def test_no_log_flag_writes_nothing(tmp_path: Path) -> None:
 def test_search_without_no_log_records_the_query(tmp_path: Path) -> None:
     ss.main(["reverse", "--root", str(tmp_path), "--repo", "demo", "--when", "2026-08-02"])
     assert (tmp_path / "intake" / "search_log.jsonl").exists()
+
+
+def test_log_file_overrides_the_default_location(tmp_path: Path) -> None:
+    dest = tmp_path / ".hardware-store" / "search_log.jsonl"
+    ss.log_query(tmp_path, "retry", None, None, "stream-repo", 0, "2026-08-02", log_file=dest)
+    line = json.loads(dest.read_text(encoding="utf-8").strip())
+    assert line["repo"] == "stream-repo"
+    assert not (tmp_path / "intake" / "search_log.jsonl").exists()
