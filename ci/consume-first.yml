@@ -2,31 +2,31 @@
 # Copy this into the stream's .github/workflows/. It fails a PR that reimplements
 # a catalogued capability without a logged store_search or a DECISION: override.
 #
-# It depends on the Hardware Store as an outward-facing dependency:
-#   pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@main"
-# which puts the store-* console scripts on PATH and vendors registry.json.
+# It pins the Hardware Store TWICE at the same version: the tool via pip
+# (store-consume-first), and the catalog index via the tag's raw registry.json.
+# Bump STORE_VERSION to adopt a newer catalog.
 name: consume-first
 
 on:
   pull_request:
 
+env:
+  STORE_VERSION: v0.2.0
+
 jobs:
   consume-first:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0                       # need the merge base for the diff
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v5
         with:
           python-version: "3.13"
-      - name: install the Hardware Store
-        run: pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@main"
-      - name: locate the Store's registry (the catalog this repo must consume from)
-        id: store
-        run: |
-          root=$(python -c "import hardware_store, pathlib; print(pathlib.Path(hardware_store.__file__).resolve().parent.parent)")
-          echo "registry=$root/registry.json" >> "$GITHUB_OUTPUT"
+      - name: install the Hardware Store tool (pinned)
+        run: pip install "matrym-hardware-store @ git+https://github.com/MatrymLabs/hardware-store@${STORE_VERSION}"
+      - name: fetch the catalog index at the same pin
+        run: curl -sSfL "https://raw.githubusercontent.com/MatrymLabs/hardware-store/${STORE_VERSION}/registry.json" -o store-registry.json
       - name: compute changed files
         id: diff
         run: |
@@ -38,7 +38,7 @@ jobs:
       - name: consume-first gate
         run: |
           store-consume-first \
-            --registry "${{ steps.store.outputs.registry }}" \
+            --registry store-registry.json \
             --search-log .hardware-store/search_log.jsonl \
             --repo "${{ github.event.repository.name }}" \
             --changed ${{ steps.diff.outputs.files }}

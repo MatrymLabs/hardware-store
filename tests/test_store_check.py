@@ -160,3 +160,35 @@ def test_consumer_resolution_detects_real_and_fake_import(tmp_path: Path) -> Non
                    data={"canonical_name": "example_reverser"})
     assert sc._path_imports_part(real, card) is True
     assert sc._path_imports_part(fake, card) is False
+
+
+def _certify_with_unresolvable_consumer(root: Path) -> None:
+    """Turn the staged CANDIDATE fixture into a CERTIFIED card whose only defect is a consumer
+    path that does not resolve under the fleet root (so consumer-resolves is the sole failure)."""
+    text = _card(root).read_text(encoding="utf-8")
+    text = text.replace('maturity = "CANDIDATE"', 'maturity = "CERTIFIED"')
+    text = text.replace("mutation_score = 0", "mutation_score = 90")
+    text = text.replace(
+        "[rd_certification]\n# empty on purpose: a CANDIDATE has not been through R&D's gate yet",
+        '[rd_certification]\nrd_id = "RD-2026-0000"\nverdict = "HARDWARE_STORE_PART"',
+    )
+    consumer = ('\n[[current_consumers]]\nrepo = "demo"\npath = "demo/does_not_exist.py"\n'
+                'version = "0.1.0"\n')
+    text = text.replace("+++\n\n# example_reverser", consumer + "+++\n\n# example_reverser")
+    _card(root).write_text(text, encoding="utf-8")
+    reg = json.loads((root / "registry.json").read_text(encoding="utf-8"))
+    reg[0]["maturity"] = "CERTIFIED"
+    reg[0]["consumers"] = ["demo"]
+    (root / "registry.json").write_text(json.dumps(reg, indent=2), encoding="utf-8")
+
+
+def test_no_fleet_skips_consumer_resolution(tmp_path: Path) -> None:
+    # consumer-resolution needs the fleet on disk; CI runs with check_consumers=False (--no-fleet).
+    root = _stage(tmp_path)
+    _certify_with_unresolvable_consumer(root)
+    parent = root.parent
+    with_fleet = sc.run_check(root, parent, threshold=70, run_tests=False, check_consumers=True)
+    assert "consumer-resolves" in _checks(with_fleet)  # the fleet-aware gate catches it
+    no_fleet = sc.run_check(root, parent, threshold=70, run_tests=False, check_consumers=False)
+    assert "consumer-resolves" not in _checks(no_fleet)  # CI skips it, and nothing else breaks
+    assert no_fleet.verdict == "PASS", [f.__dict__ for f in no_fleet.failures]

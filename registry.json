@@ -1,1 +1,47 @@
-[]
+[
+  {
+    "part_id": "PRT-0001",
+    "slug": "budget-gate",
+    "canonical_name": "budget_gate",
+    "capability": "Decide whether a proposed spend fits its budget: a bounded-autonomy cost governor that returns a within/breach verdict for any additive cost unit (dollars, tokens, API calls, compute-seconds).",
+    "category": "Operations",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "fleet-ops"
+    ],
+    "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0002",
+    "slug": "lexicon-gate",
+    "canonical_name": "lexicon_gate",
+    "capability": "Find prohibited vocabulary in any text against a compiled term policy, reporting each offending line:column with a fix - a pure, reusable prose-governance gate (a sibling of a CI-YAML linter, for words not structure).",
+    "category": "Validation",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "ship"
+    ],
+    "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0003",
+    "slug": "source-monitor",
+    "canonical_name": "source_monitor",
+    "capability": "Classify what changed at a watched source (URL, config, dependency, doc, API) against its last snapshot - first_capture/unchanged/content_changed/broken_link - via an injected fetch seam, returning the new snapshot without persisting it (a source drift detector).",
+    "category": "Operations",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "federal-guidance-library"
+    ],
+    "version": "0.1.0"
+  }
+]
