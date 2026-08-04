@@ -3,7 +3,7 @@ part_id = "PRT-0004"
 canonical_name = "retry"
 capability = "Retry a flaky operation with exponential backoff, for either boundary shape: retry-on-exception (re-raise the final failure) or retry-on-result (return the last result, never raise). One validated policy (attempt budget + backoff) drives both runners."
 category = "Operations"
-maturity = "CANDIDATE"
+maturity = "CERTIFIED"
 contract = "contract/retry.py"
 inputs = "a RetryPolicy (max_attempts, base_delay, factor, max_delay); a zero-arg operation (a callable that may raise, or a producer that returns a result); the transient signal (an exception-type tuple, or a result predicate); an injected sleep and an optional on_retry hook"
 outputs = "the operation's successful value (exception shape) or the last result (result shape); each retry is reported to on_retry as an Attempt(number, delay, reason)"
@@ -31,11 +31,27 @@ origin = "clean-room reconstruction of the standard retry / exponential-backoff 
 ai_generated = "implementation and tests are AI-assisted (Claude), human-reviewed and gated"
 verified_by = "17 contract tests (100% line+branch coverage of the impl), both consumer shapes reproduced; mutmut 88% kill rate (5 survivors are equivalent mutants: an unreachable pragma line, a message-string wrap a match= still accepts, and a loop bound made redundant by the internal exhaustion guard)"
 
+[rd_certification]
+rd_id = "RD-2026-0009"
+verdict = "HARDWARE_STORE_PART"
+
 [[implementations]]
 language = "python"
 path = "impl/python/retry.py"
 version = "0.1.0"
 benchmark = "success path ~0.45 us/call (run_with_retries and retry_result); delay_for ~0.28 us"
+
+[[current_consumers]]
+repo = "ai-log-triage"
+path = "ai-log-triage/src/triage/llm.py"
+version = "0.1.0"
+adopted = "2026-08-04"
+
+[[current_consumers]]
+repo = "federal-guidance-library"
+path = "federal-guidance-library/src/fgl/resilience.py"
+version = "0.1.0"
+adopted = "2026-08-04"
 +++
 
 # retry (CARD)
@@ -62,7 +78,9 @@ reason) for evidence. Pure of I/O otherwise; stdlib only.
   observable Attempts) + refusal/hostile (invalid policy, permanent-error passthrough, exhausted
   transient, empty retry_on, permanently-transient result); 100% coverage, 88% mutation kill rate.
 
-Maturity: **CANDIDATE**. This Part unifies a capability currently reimplemented in ai-log-triage and
-federal-guidance-library; certifying it (CERTIFIED, with the real consumers wired and an R&D
-verdict) is the founder-gated next step. Nothing consumes it yet - staged in `intake/`, not the
-catalog, because nothing self-certifies.
+Maturity: **CERTIFIED** (R&D verdict RD-2026-0009 HARDWARE_STORE_PART; two real consumers; mutation
+>= threshold). This Part unified a capability that was reimplemented in ai-log-triage AND
+federal-guidance-library; both now consume it and deleted their local dups: ai-log-triage
+(`src/triage/llm.py`) uses the exception-triggered runner, federal-guidance-library
+(`src/fgl/resilience.py`) uses the result-triggered runner, so both runners are exercised by a real
+consumer. The Rule-of-Three / second-consumer pull gate is met by two independent repos.

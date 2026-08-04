@@ -43,5 +43,21 @@
       "federal-guidance-library"
     ],
     "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0004",
+    "slug": "retry",
+    "canonical_name": "retry",
+    "capability": "Retry a flaky operation with exponential backoff, for either boundary shape: retry-on-exception (re-raise the final failure) or retry-on-result (return the last result, never raise). One validated policy (attempt budget + backoff) drives both runners.",
+    "category": "Operations",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "ai-log-triage",
+      "federal-guidance-library"
+    ],
+    "version": "0.1.0"
   }
 ]
