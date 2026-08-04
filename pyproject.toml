@@ -43,6 +43,7 @@ extend-exclude = ["tests/fixtures"]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.mypy]
+files = ["hardware_store"]  # the tool's typed surface (matches the Makefile; catalog/ is reference impls)
 python_version = "3.11"
 ignore_missing_imports = true
 exclude = ["tests/fixtures"]
