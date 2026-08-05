@@ -59,5 +59,55 @@
       "federal-guidance-library"
     ],
     "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0005",
+    "slug": "circuit-breaker",
+    "canonical_name": "circuit_breaker",
+    "capability": "Fail fast when a dependency is sustainedly broken: a three-state (closed/open/half-open) circuit breaker that trips after consecutive failures, fast-fails while open, then probes once after a reset timeout. Usable as a raw state machine or via a call(fn) runner.",
+    "category": "Operations",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "ai-log-triage",
+      "federal-guidance-library"
+    ],
+    "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0006",
+    "slug": "token-bucket",
+    "canonical_name": "token_bucket",
+    "capability": "Rate-limit work with a token bucket: allow bursts up to capacity, refill at a sustained rate, and expose both consumer shapes already present in the fleet - deny/return retry_after and pace/return wait seconds.",
+    "category": "Operations",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "codeforge",
+      "codeforge-client",
+      "federal-guidance-library",
+      "saas-starter"
+    ],
+    "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0007",
+    "slug": "cache-aside",
+    "canonical_name": "cache_aside",
+    "capability": "Cache reads lazily with a TTL, explicit key invalidation, failed-load non-caching, and hit/miss stats so consumers can bound staleness and measure whether the cache is worthwhile.",
+    "category": "Data",
+    "maturity": "CERTIFIED",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "codeforge",
+      "saas-starter"
+    ],
+    "version": "0.1.0"
   }
 ]

@@ -3,7 +3,7 @@ part_id = "PRT-0005"
 canonical_name = "circuit_breaker"
 capability = "Fail fast when a dependency is sustainedly broken: a three-state (closed/open/half-open) circuit breaker that trips after consecutive failures, fast-fails while open, then probes once after a reset timeout. Usable as a raw state machine or via a call(fn) runner."
 category = "Operations"
-maturity = "CANDIDATE"
+maturity = "CERTIFIED"
 contract = "contract/circuit_breaker.py"
 inputs = "a failure_threshold (int >= 1), a reset_timeout (finite, non-negative seconds), an optional injected clock; then success/failure signals via record_success/record_failure or a callable via call(fn)"
 outputs = "state() (closed|open|half_open), allow() (bool); call(fn) returns fn()'s value or raises CircuitOpen when the breaker is open"
@@ -30,11 +30,27 @@ origin = "clean-room reconstruction of the standard circuit-breaker pattern (Azu
 ai_generated = "implementation and tests are AI-assisted (Claude), human-reviewed and gated"
 verified_by = "14 contract tests (100% line+branch coverage of the impl): the full state machine (closed->open->half_open->closed/open), the reset-timeout boundary, and the call runner + hostile construction; cosmic-ray 78% kill rate (102 mutants, 22 survivors dominated by EQUIVALENT comparison-operator mutants: == vs `is` on interned string-state constants, == vs >= on the state enum, and NumberReplacer mutants on dataclass default fields overwritten before use). cosmic-ray, not mutmut, because mutmut cannot map class-method mutants to tests (the fleet-legit alternative, established by HC-29)"
 
+[rd_certification]
+rd_id = "RD-2026-0011"
+verdict = "HARDWARE_STORE_PART"
+
 [[implementations]]
 language = "python"
 path = "impl/python/circuit_breaker.py"
 version = "0.1.0"
 benchmark = "allow() ~0.16 us/call; call() ~0.39 us on the closed/success path"
+
+[[current_consumers]]
+repo = "ai-log-triage"
+path = "ai-log-triage/src/triage/circuit_breaker.py"
+version = "0.1.0"
+adopted = "2026-08-04"
+
+[[current_consumers]]
+repo = "federal-guidance-library"
+path = "federal-guidance-library/src/fgl/circuit_breaker.py"
+version = "0.1.0"
+adopted = "2026-08-04"
 +++
 
 # circuit_breaker (CARD)
@@ -62,7 +78,7 @@ Not thread-safe by design: a single-worker guard for one boundary. Stdlib only.
 - **Tests:** `tests/test_contract.py` - the full state machine + reset-timeout boundary + call runner
   + hostile construction; 100% coverage, cosmic-ray 78% kill rate.
 
-Maturity: **CANDIDATE**. This Part unifies a capability whose state machine is reimplemented
-byte-identically in ai-log-triage and federal-guidance-library; certifying it (with both consumers
-wired and an R&D verdict) is the founder-gated next step. It completes the resilience pair with
-`retry` (PRT-0004).
+Maturity: **CERTIFIED** (R&D verdict RD-2026-0011 HARDWARE_STORE_PART; two real consumers;
+mutation >= threshold). This Part unifies a capability whose state machine was reimplemented
+byte-identically in ai-log-triage and federal-guidance-library; both now carry the Hardware Store
+vendored engine. It completes the resilience pair with `retry` (PRT-0004).
