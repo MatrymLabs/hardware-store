@@ -43,7 +43,7 @@ benchmark = "success path ~0.45 us/call (run_with_retries and retry_result); del
 
 [[current_consumers]]
 repo = "ai-log-triage"
-path = "ai-log-triage/src/triage/llm.py"
+path = "ai-log-triage/src/triage/retry.py"
 version = "0.1.0"
 adopted = "2026-08-04"
 
