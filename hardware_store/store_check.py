@@ -16,7 +16,7 @@ watched fail is unproven):
   tests-pass           ... and it passes against the code (CMD: pytest).
   certified-gate       CERTIFIED/FLEET_CORE need rd_certification + a real consumer +
                        a mutation score at/above the threshold.
-  consumer-resolves    each listed consumer path exists and actually imports the Part.
+  consumer-resolves    each listed consumer path exists and carries the Part's provenance id.
   no-deprecated-vocab  no retired fleet vocabulary anywhere in the Store.
 
 Exit 0 on PASS, 1 on FAIL. A red store_check is a fleet alarm, not a warning.
@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -171,13 +172,16 @@ def check_consumers_resolve(cards: list[sl.Card], fleet_root: Path, report: sl.R
                 continue
             if not _path_imports_part(target, card):
                 report.note("consumer-resolves", card.slug,
-                            f"consumer {path} does not import/depend on '{card.canonical_name}'")
+                            f"consumer {path} lacks a matching provenance citation for "
+                            f"{card.part_id}", severity="warn")
 
 
 def _path_imports_part(target: Path, card: sl.Card) -> bool:
-    """True if the consumer file/dir references the Part's canonical name or slug."""
-    needles = {card.slug, str(card.data.get("canonical_name", ""))}
-    needles.discard("")
+    """True if the consumer file/dir cites the Part's exact permanent identity."""
+    part_id = card.part_id.strip()
+    if not part_id:
+        return False
+    citation = re.compile(rf"(?<![A-Za-z0-9]){re.escape(part_id)}(?![A-Za-z0-9])")
     files = [target] if target.is_file() else [p for p in target.rglob("*.py")
                                                if not (SKIP_DIRS & set(p.parts))]
     for py in files:
@@ -185,7 +189,7 @@ def _path_imports_part(target: Path, card: sl.Card) -> bool:
             text = py.read_text(encoding="utf-8", errors="ignore")
         except OSError:
             continue
-        if any(n in text for n in needles):
+        if citation.search(text):
             return True
     return False
 
@@ -229,10 +233,14 @@ def run_check(root: Path, fleet_root: Path, threshold: int, run_tests: bool,
     check_tests(root, cards, run_tests, report)
     check_certified_gate(cards, threshold, report)
     if check_consumers:
-        # consumer-resolution needs the consuming fleet repos on disk under fleet_root; CI (which
-        # checks out only the Store) skips it via --no-fleet. certified-gate above still enforces
-        # that each CERTIFIED card DECLARES a real consumer + mutation + rd_certification.
         check_consumers_resolve(cards, fleet_root, report)
+    elif any(card.is_certified for card in cards):
+        report.note(
+            "consumer-resolves",
+            "-",
+            "consumer provenance not verified: fleet root was not supplied (--no-fleet)",
+            severity="warn",
+        )
     check_no_deprecated_vocab(root, report)
     return report
 

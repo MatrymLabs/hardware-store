@@ -153,11 +153,14 @@ def test_sabotage_certified_below_mutation_threshold(tmp_path: Path) -> None:
 
 def test_consumer_resolution_detects_real_and_fake_import(tmp_path: Path) -> None:
     real = tmp_path / "real.py"
-    real.write_text("from example_reverser import reverse\n", encoding="utf-8")
+    real.write_text(
+        '"""VENDORED from the Matrym Labs Hardware Store: part example_reverser (PRT-0005)."""\n',
+        encoding="utf-8",
+    )
     fake = tmp_path / "fake.py"
     fake.write_text("x = 1\n", encoding="utf-8")
     card = sl.Card(slug="example-reverser", path=tmp_path / "CARD.md",
-                   data={"canonical_name": "example_reverser"})
+                   data={"canonical_name": "example_reverser", "part_id": "PRT-0005"})
     assert sc._path_imports_part(real, card) is True
     assert sc._path_imports_part(fake, card) is False
 
@@ -192,3 +195,99 @@ def test_no_fleet_skips_consumer_resolution(tmp_path: Path) -> None:
     no_fleet = sc.run_check(root, parent, threshold=70, run_tests=False, check_consumers=False)
     assert "consumer-resolves" not in _checks(no_fleet)  # CI skips it, and nothing else breaks
     assert no_fleet.verdict == "PASS", [f.__dict__ for f in no_fleet.failures]
+
+
+def _certify_with_consumer(root: Path, content: str, *, part_id: str = "PRT-0005",
+                           path: str = "demo/consumer.py") -> None:
+    """Make the fixture certified and place one claimed consumer under its fleet root."""
+    text = _card(root).read_text(encoding="utf-8")
+    text = text.replace('part_id = "PRT-EX01"', f'part_id = "{part_id}"')
+    text = text.replace('maturity = "CANDIDATE"', 'maturity = "CERTIFIED"')
+    text = text.replace("mutation_score = 0", "mutation_score = 90")
+    text = text.replace(
+        "[rd_certification]\n# empty on purpose: a CANDIDATE has not been through R&D's gate yet",
+        '[rd_certification]\nrd_id = "RD-2026-0000"\nverdict = "HARDWARE_STORE_PART"',
+    )
+    consumer = f'\n[[current_consumers]]\nrepo = "demo"\npath = "{path}"\nversion = "0.1.0"\n'
+    text = text.replace("+++\n\n# example_reverser", consumer + "+++\n\n# example_reverser")
+    _card(root).write_text(text, encoding="utf-8")
+
+    reg = json.loads((root / "registry.json").read_text(encoding="utf-8"))
+    reg[0]["part_id"] = part_id
+    reg[0]["maturity"] = "CERTIFIED"
+    reg[0]["consumers"] = ["demo"]
+    (root / "registry.json").write_text(json.dumps(reg, indent=2), encoding="utf-8")
+
+    consumer_path = root.parent / path
+    consumer_path.parent.mkdir(parents=True, exist_ok=True)
+    consumer_path.write_text(content, encoding="utf-8")
+
+
+def _consumer_findings(report: sl.Report) -> list[sl.Finding]:
+    return [f for f in report.findings if f.check == "consumer-resolves"]
+
+
+def test_consumer_without_provenance_citation_is_reported(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(
+        root,
+        "EXAMPLE_REVERSER = 1\nexample_reverser_alias = EXAMPLE_REVERSER\n",
+    )
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    findings = _consumer_findings(report)
+    assert findings, [f.__dict__ for f in report.findings]
+    assert any("demo/consumer.py" in f.message for f in findings)
+
+
+def test_consumer_with_matching_prt_citation_is_accepted(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(
+        root,
+        '"""VENDORED from the Matrym Labs Hardware Store: part example_reverser (PRT-0005)."""\n',
+    )
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    assert not _consumer_findings(report), [f.__dict__ for f in report.findings]
+
+
+def test_consumer_citing_a_different_part_id_is_reported(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(
+        root,
+        "# VENDORED from the Matrym Labs Hardware Store: part example_reverser (PRT-0009)\n",
+    )
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    findings = _consumer_findings(report)
+    assert findings, [f.__dict__ for f in report.findings]
+    assert any("PRT-0005" in f.message for f in findings)
+
+
+def test_provenance_findings_are_warnings_not_failures(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, "x = example_reverser\n")
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    assert report.verdict == "PASS", [f.__dict__ for f in report.failures]
+    assert report.warnings
+    assert not report.failures
+    assert any(f.check == "consumer-resolves" for f in report.warnings)
+
+
+def test_missing_fleet_root_reports_unverified_rather_than_silently_passing(
+    tmp_path: Path,
+) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, "from example_reverser import example_reverser\n")
+
+    report = sc.run_check(root, tmp_path / "missing-fleet", threshold=70,
+                          run_tests=False, check_consumers=False)
+
+    assert report.verdict == "PASS"
+    assert any("not verified" in f.message.lower() for f in report.warnings), \
+        [f.__dict__ for f in report.findings]
