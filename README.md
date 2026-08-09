@@ -54,3 +54,12 @@ probable reimplementation unless a logged search or a `DECISION:` override resol
 it. The catalog is intentionally empty; real Parts arrive in Phase 3 as CANDIDATEs and
 are certified by R&D (Phase 4 walks the retry + circuit-breaker pair through the full
 loop and consolidates the ai-log-triage / FGL duplicates).
+
+## License
+
+MIT (see `LICENSE`), matching the rest of the Matrym Labs fleet.
+
+Every Part in `catalog/` records its own `[provenance]` block, and all five declare **clean-room
+reconstruction with no code copied** from the systems that inspired them. The MIT grant therefore
+covers original work and contradicts no upstream licence. A Part whose provenance ever cited copied
+code would need its own notice before it could ship under this grant.
