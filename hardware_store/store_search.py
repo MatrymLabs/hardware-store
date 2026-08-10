@@ -29,7 +29,15 @@ else:
 def search(cards: list[sl.Card], term: str, category: str | None,
            language: str | None) -> list[tuple[int, sl.Card]]:
     """Return (score, card) for cards matching the query, best score first."""
-    needle = term.lower().strip()
+    # Match on ANY term, not the whole phrase as one literal.
+    #
+    # Until 2026-08-10 the query was a single substring, so every multi-word search missed. The
+    # certified `typed-settings` Part could not be found by its own canonical name: `settings`
+    # returned it, `typed settings` returned "no catalogued Part matches", which reads as
+    # permission to build one. A consume-first rule whose search says a thing does not exist
+    # CAUSES the duplication it exists to prevent, and this defect was found while following that
+    # rule for real.
+    terms = [w for w in term.lower().split() if w]
     hits: list[tuple[int, sl.Card]] = []
     for card in cards:
         if category and card.data.get("category") != category:
@@ -37,13 +45,17 @@ def search(cards: list[sl.Card], term: str, category: str | None,
         if language and language not in card.languages:
             continue
         score = 0
-        if needle:
-            if needle in str(card.data.get("capability", "")).lower():
-                score += 3
-            if needle in card.canonical_name.lower() or needle in card.slug.lower():
-                score += 2
-            if needle in str(card.data.get("category", "")).lower():
-                score += 1
+        if terms:
+            capability = str(card.data.get("capability", "")).lower()
+            names = f"{card.canonical_name.lower()} {card.slug.lower()}"
+            kind = str(card.data.get("category", "")).lower()
+            for word in terms:
+                if word in capability:
+                    score += 3
+                if word in names:
+                    score += 2
+                if word in kind:
+                    score += 1
             if score == 0:
                 continue
         hits.append((score, card))
