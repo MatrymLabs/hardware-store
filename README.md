@@ -8,6 +8,11 @@ carry implementations in more than one language behind a single contract.
 The full charter, laws, and lifecycle live in **[STORE.md](STORE.md)**. The card
 contract is **[docs/CARD_SCHEMA.md](docs/CARD_SCHEMA.md)**.
 
+**Worked example:** [How one duplicated config class became a certified
+part](docs/case-studies/typed-settings.md) follows PRT-0006 from observed duplication
+through to two independent consumers, including the mutation run that falsified three
+of its own tests and the defect its second consumer found in the contract.
+
 ## Layout
 
 ```
@@ -17,6 +22,7 @@ registry.json     machine-readable index; store-check proves it mirrors catalog/
 intake/           submission staging: candidates awaiting an R&D verdict
 hardware_store/   the installable package: the store-* console verbs
 docs/             CARD_SCHEMA, CARD_TEMPLATE, SUBMISSION, CONSUMPTION, STREAM_INTEGRATION
+docs/case-studies/ worked examples of the extraction path, end to end
 ci/               consume-first.yml, the drop-in gate each stream repo adds
 tests/            proof the tooling works, incl. sabotage tests for every check
 ```
