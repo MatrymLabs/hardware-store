@@ -87,7 +87,8 @@
       "python"
     ],
     "consumers": [
-      "recall"
+      "recall",
+      "saas-starter"
     ],
     "version": "0.1.0"
   }
