@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from hardware_store import store_lib as sl
 from hardware_store import store_search as ss
 
@@ -57,3 +59,31 @@ def test_log_file_overrides_the_default_location(tmp_path: Path) -> None:
     line = json.loads(dest.read_text(encoding="utf-8").strip())
     assert line["repo"] == "stream-repo"
     assert not (tmp_path / "intake" / "search_log.jsonl").exists()
+
+
+def test_a_multi_word_query_matches_on_any_term(tmp_path) -> None:
+    """The consume-first rule depends on this, and it was broken.
+
+    Until 2026-08-10 the query was matched as ONE literal substring, so every multi-word search
+    missed. The certified `typed-settings` Part could not be found by its own canonical name:
+    `settings` returned it, `typed settings` returned "no catalogued Part matches".
+
+    That reads as permission to build one. A search that says a certified capability does not
+    exist CAUSES the duplication the consume-first rule exists to prevent, and it was found while
+    following that rule for real, on the way to wiring a second consumer.
+    """
+    from hardware_store import store_lib as sl
+    from hardware_store.store_search import search
+
+    catalog = Path(__file__).resolve().parents[1] / "catalog"
+    cards = sl.load_cards(catalog)
+    named = {c.slug for c in cards}
+    if "typed-settings" not in named:
+        pytest.skip("typed-settings not catalogued in this checkout")
+
+    for query in ("typed settings", "environment settings", "settings environment secret"):
+        found = [c.slug for _, c in search(cards, query, None, None)]
+        assert "typed-settings" in found, f"{query!r} did not find the Part by its own words"
+
+    # and a query that genuinely matches nothing still returns nothing
+    assert search(cards, "zzzz nonexistent capability", None, None) == []
