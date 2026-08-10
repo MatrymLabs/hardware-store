@@ -190,6 +190,7 @@ def test_no_fleet_skips_consumer_resolution(tmp_path: Path) -> None:
     root = _stage(tmp_path)
     _certify_with_unresolvable_consumer(root)
     parent = root.parent
+    (parent / "demo").mkdir()
     with_fleet = sc.run_check(root, parent, threshold=70, run_tests=False, check_consumers=True)
     assert "consumer-resolves" in _checks(with_fleet)  # the fleet-aware gate catches it
     no_fleet = sc.run_check(root, parent, threshold=70, run_tests=False, check_consumers=False)
@@ -291,3 +292,32 @@ def test_missing_fleet_root_reports_unverified_rather_than_silently_passing(
     assert report.verdict == "PASS"
     assert any("not verified" in f.message.lower() for f in report.warnings), \
         [f.__dict__ for f in report.findings]
+
+
+def test_missing_sibling_is_unverified_not_a_false_failure(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, '"""VENDORED (PRT-0005)."""\n')
+    shutil.rmtree(tmp_path / "demo")
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    findings = _consumer_findings(report)
+    assert not report.failures
+    assert len(findings) == 1
+    assert findings[0].severity == "unverified"
+    assert "demo" in findings[0].message
+    assert "VERDICT: UNVERIFIED (0 failing, 0 warning, 1 unverified)" in sc.render(report, root)
+
+
+def test_missing_consumer_file_under_present_sibling_still_fails(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, '"""VENDORED (PRT-0005)."""\n')
+    (tmp_path / "demo" / "consumer.py").unlink()
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+
+    findings = _consumer_findings(report)
+    assert report.verdict == "FAIL"
+    assert len(findings) == 1
+    assert findings[0].severity == "fail"
+    assert "does not exist" in findings[0].message

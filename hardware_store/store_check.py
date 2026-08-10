@@ -19,7 +19,8 @@ watched fail is unproven):
   consumer-resolves    each listed consumer path exists and carries the Part's provenance id.
   no-deprecated-vocab  no retired fleet vocabulary anywhere in the Store.
 
-Exit 0 on PASS, 1 on FAIL. A red store_check is a fleet alarm, not a warning.
+Exit 0 unless the Store has a FAIL. An UNVERIFIED consumer needs its sibling
+repository checked out before the gate can make an attributed claim.
 """
 
 from __future__ import annotations
@@ -165,6 +166,15 @@ def check_consumers_resolve(cards: list[sl.Card], fleet_root: Path, report: sl.R
             if not path:
                 report.note("consumer-resolves", card.slug, "a consumer has no path")
                 continue
+            consumer_repo = str(consumer.get("repo", "")).strip()
+            if consumer_repo and not (fleet_root / consumer_repo).is_dir():
+                report.note(
+                    "consumer-resolves",
+                    card.slug,
+                    f"consumer repository is not present under the fleet root: {consumer_repo}",
+                    severity="unverified",
+                )
+                continue
             target = fleet_root / path
             if not target.exists():
                 report.note("consumer-resolves", card.slug,
@@ -245,6 +255,20 @@ def run_check(root: Path, fleet_root: Path, threshold: int, run_tests: bool,
     return report
 
 
+def _unverified(report: sl.Report) -> list[sl.Finding]:
+    """Findings whose truth depends on a sibling repository not being available."""
+    return [f for f in report.findings if f.severity == "unverified"]
+
+
+def _verdict(report: sl.Report) -> str:
+    """The rendered verdict keeps unverified evidence distinct from pass and fail."""
+    if report.failures:
+        return "FAIL"
+    if _unverified(report):
+        return "UNVERIFIED"
+    return "PASS"
+
+
 def render(report: sl.Report, root: Path) -> str:
     lines = [f"Hardware Store integrity check :: {root}"]
     if not report.findings:
@@ -253,8 +277,13 @@ def render(report: sl.Report, root: Path) -> str:
         lines.append(f"  FAIL [{f.check}] {f.part}: {f.message}")
     for f in report.warnings:
         lines.append(f"  WARN [{f.check}] {f.part}: {f.message}")
-    lines.append(f"VERDICT: {report.verdict} "
-                 f"({len(report.failures)} failing, {len(report.warnings)} warning)")
+    for f in _unverified(report):
+        lines.append(f"  UNVERIFIED [{f.check}] {f.part}: {f.message}")
+    verdict = _verdict(report)
+    summary = f"({len(report.failures)} failing, {len(report.warnings)} warning)"
+    if _unverified(report):
+        summary = f"{summary[:-1]}, {len(_unverified(report))} unverified)"
+    lines.append(f"VERDICT: {verdict} {summary}")
     return "\n".join(lines)
 
 
@@ -283,12 +312,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.json:
         print(json.dumps({
-            "root": str(root), "verdict": report.verdict,
+            "root": str(root), "verdict": _verdict(report),
             "findings": [f.__dict__ for f in report.findings],
         }, indent=2))
     else:
         print(render(report, root))
-    return 0 if report.verdict == "PASS" else 1
+    return 1 if _verdict(report) == "FAIL" else 0
 
 
 if __name__ == "__main__":
