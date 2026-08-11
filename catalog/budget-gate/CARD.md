@@ -40,7 +40,11 @@ path = "impl/python/budget_gate.py"
 version = "0.1.0"
 benchmark = "check ~3.6 us/call; tally ~340 us over a 1,000-row ledger"
 
-[[current_consumers]]
+# NOT a consumer. Verified against git on 2026-08-12: this path does not cite the part id, because
+# the Part was extracted FROM it. `consumers` means code that adopted the Part and says so;
+# `extracted_from` means code the Part came out of. They point in opposite directions, and holding
+# both in one field is what let this catalogue claim seven consumers while having three.
+[[extracted_from]]
 repo = "fleet-ops"
 path = "fleet-ops/harness/_budget.py"
 version = "0.1.0"
