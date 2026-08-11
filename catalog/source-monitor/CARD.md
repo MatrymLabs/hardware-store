@@ -39,7 +39,11 @@ path = "impl/python/source_monitor.py"
 version = "0.1.0"
 benchmark = "check ~10 us at 1 KB, ~1.3 ms at 1 MB (sha256-bound)"
 
-[[current_consumers]]
+# NOT a consumer. Verified against git on 2026-08-12: this path does not cite the part id, because
+# the Part was extracted FROM it. `consumers` means code that adopted the Part and says so;
+# `extracted_from` means code the Part came out of. They point in opposite directions, and holding
+# both in one field is what let this catalogue claim seven consumers while having three.
+[[extracted_from]]
 repo = "federal-guidance-library"
 path = "federal-guidance-library/src/fgl/diff.py"
 version = "0.1.0"

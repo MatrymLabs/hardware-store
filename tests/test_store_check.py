@@ -29,6 +29,13 @@ def _card(root: Path) -> Path:
     return root / "catalog" / PART / "CARD.md"
 
 
+def _sync_registry(root: Path) -> None:
+    """Regenerate the fixture's registry from its own cards. registry.json is GENERATED."""
+    import json as _json
+    reg = sl.build_registry(sl.load_cards(root / "catalog"))
+    (root / "registry.json").write_text(_json.dumps(reg, indent=2) + "\n", encoding="utf-8")
+
+
 def _checks(report: sl.Report) -> set[str]:
     return {f.check for f in report.failures}
 
@@ -268,16 +275,27 @@ def test_consumer_citing_a_different_part_id_is_reported(tmp_path: Path) -> None
     assert any("PRT-0005" in f.message for f in findings)
 
 
-def test_provenance_findings_are_warnings_not_failures(tmp_path: Path) -> None:
+def test_an_uncited_consumer_FAILS_rather_than_warns(tmp_path: Path) -> None:
+    """This test previously asserted the opposite, and that is how the defect survived.
+
+    It read `provenance findings are warnings not failures`, so a Part could list a consumer that
+    had never cited it and the Store still reported PASS. Four of seven Parts did exactly that, and
+    every one of those entries was an ORIGIN filed in the adopters' column: the Part had been
+    extracted FROM that code, not adopted BY it. As a warning, the gate said so quietly enough that
+    nobody acted on it for as long as the catalogue has existed.
+
+    A consumer that does not cite the Part is a reuse claim with no evidence, and evidenced reuse
+    is the Store's entire assertion. Origins belong in `extracted_from`; what stays in `consumers`
+    must earn the word.
+    """
     root = _stage(tmp_path)
-    _certify_with_consumer(root, "x = example_reverser\n")
+    _certify_with_consumer(root, "x = example_reverser\n")  # uses the code, cites no part id
 
     report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
 
-    assert report.verdict == "PASS", [f.__dict__ for f in report.failures]
-    assert report.warnings
-    assert not report.failures
-    assert any(f.check == "consumer-resolves" for f in report.warnings)
+    assert report.verdict == "FAIL"
+    assert any(f.check == "consumer-resolves" for f in report.failures)
+    assert any("does not cite" in f.message for f in report.failures)
 
 
 def test_missing_fleet_root_reports_unverified_rather_than_silently_passing(
@@ -321,3 +339,42 @@ def test_missing_consumer_file_under_present_sibling_still_fails(tmp_path: Path)
     assert len(findings) == 1
     assert findings[0].severity == "fail"
     assert "does not exist" in findings[0].message
+
+
+def test_consumer_claims_are_checked_on_every_card_not_just_certified_ones(tmp_path: Path) -> None:
+    """The check ran on `c.is_certified` only, and skipped the population the error lived in.
+
+    Four CANDIDATE Parts listed consumers that had never cited them. Every one was an ORIGIN filed
+    in the adopters' column, and none was ever inspected, because the gate only looked at Parts
+    that had already been through the Verdict Gate. It reported clean about what it had checked and
+    said nothing about the rest.
+    """
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, "x = example_reverser\n")
+    card = _card(root)
+    card.write_text(card.read_text(encoding="utf-8").replace("CERTIFIED", "CANDIDATE"),
+                    encoding="utf-8")
+    _sync_registry(root)
+
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+    assert any(f.check == "consumer-resolves" for f in report.failures), (
+        "a CANDIDATE listing an uncited consumer makes the same unevidenced claim as a "
+        "CERTIFIED one"
+    )
+
+
+def test_a_stale_checkout_is_UNVERIFIED_not_a_false_failure(tmp_path: Path) -> None:
+    """The other half of the same defect: the gate asked the filesystem, not git.
+
+    On 2026-08-12 it failed `typed-settings` because a `recall` checkout sat two commits behind,
+    while the file was on origin/main the whole time. "The record points at something that no
+    longer exists" and "this checkout cannot see it" are different findings.
+    """
+    root = _stage(tmp_path)
+    _certify_with_consumer(root, "from example_reverser import example_reverser\n")
+    _sync_registry(root)
+
+    # a sibling that is not a git repository at all: git cannot answer, so neither may the gate
+    report = sc.run_check(root, tmp_path / "no-such-fleet", threshold=70, run_tests=False)
+    assert not any(f.check == "consumer-resolves" and f.severity == "fail"
+                   for f in report.failures), "an unreadable environment is not a false claim"
