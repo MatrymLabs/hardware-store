@@ -1,12 +1,11 @@
 packet_id: CX-005
 pr_url: https://github.com/MatrymLabs/hardware-store/pull/34
-status: PARTIAL
+status: COMPLETE
 
 summary: >
   Added a concurrent-claim contract case for PRT-0007. The case passes on the
   shipped SQLite adapter and fails when claim() is sabotaged into check-then-act.
-  The implementation is complete locally; this return remains PARTIAL because
-  the sandbox cannot resolve github.com to push the commit and update the PR.
+  The verified implementation is pushed to the existing PR branch.
 
 precondition_verified:
   command: >
@@ -73,10 +72,7 @@ audit:
     suite_can_falsify: yes
     evidence: "Secret-default, aggregate errors, redaction, frozen state, and defensive-copy cases."
 
-blockers:
-  - >
-    Remote refresh and push are unavailable in this sandbox. The latest attempted fetch reported:
-    ssh: Could not resolve hostname github.com: Temporary failure in name resolution.
+blockers: []
 
 extraction:
   reimplemented: none
