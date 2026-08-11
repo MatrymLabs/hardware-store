@@ -91,5 +91,21 @@
       "saas-starter"
     ],
     "version": "0.1.0"
+  },
+  {
+    "part_id": "PRT-0007",
+    "slug": "applied-once",
+    "canonical_name": "applied-once",
+    "capability": "Durably record an opaque operation key exactly once. An atomic claim returns true only to the caller that creates the record, and false to every later caller using the same key.",
+    "category": "Data",
+    "maturity": "CANDIDATE",
+    "languages": [
+      "python"
+    ],
+    "consumers": [
+      "codeforge",
+      "saas-starter"
+    ],
+    "version": "0.1.0"
   }
 ]
