@@ -13,6 +13,8 @@ durability both of them needed.
 
 from __future__ import annotations
 
+import threading
+
 import pytest
 from applied_once import AppliedOnce, KeyRefused
 
@@ -76,3 +78,25 @@ def test_the_record_outlives_the_store_object(store_factory) -> None:
     second = store_factory()
     assert second.seen("evt_durable")
     assert second.claim("evt_durable") is False
+
+
+def test_only_one_of_many_concurrent_claimants_wins(store: AppliedOnce) -> None:
+    """The central atomicity guarantee must fail on check-then-act."""
+    wins: list[bool] = []
+    lock = threading.Lock()
+    start = threading.Barrier(8)
+
+    def race() -> None:
+        start.wait()
+        won = store.claim("evt_contested")
+        with lock:
+            wins.append(won)
+
+    threads = [threading.Thread(target=race) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert wins.count(True) == 1, f"{wins.count(True)} callers claimed one operation: {wins}"
+    assert wins.count(False) == 7
