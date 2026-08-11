@@ -36,13 +36,17 @@ path = "impl/python/applied_once_impl.py"
 version = "0.1.0"
 benchmark = "unmeasured"
 
-[[current_consumers]]
+# NOT consumers. Verified against git on 2026-08-12: neither path cites PRT-0007, because the
+# Part was extracted FROM them. `consumers` means code that adopted the Part and says so;
+# `extracted_from` means code the Part came out of. Opposite directions, and holding both in one
+# field is what let this catalogue claim seven consumers while having three.
+[[extracted_from]]
 repo = "codeforge"
 path = "codeforge/kernel/world/reward_ledger.py"
 version = "source implementation, pending adoption"
 adopted = "2026-08-11"
 
-[[current_consumers]]
+[[extracted_from]]
 repo = "saas-starter"
 path = "saas-starter/app/models.py"
 version = "source implementation, pending adoption"

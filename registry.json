@@ -9,7 +9,8 @@
     "languages": [
       "python"
     ],
-    "consumers": [
+    "consumers": [],
+    "extracted_from": [
       "fleet-ops"
     ],
     "version": "0.1.0"
@@ -24,7 +25,8 @@
     "languages": [
       "python"
     ],
-    "consumers": [
+    "consumers": [],
+    "extracted_from": [
       "ship"
     ],
     "version": "0.1.0"
@@ -39,7 +41,8 @@
     "languages": [
       "python"
     ],
-    "consumers": [
+    "consumers": [],
+    "extracted_from": [
       "federal-guidance-library"
     ],
     "version": "0.1.0"
@@ -58,6 +61,7 @@
       "ai-log-triage",
       "federal-guidance-library"
     ],
+    "extracted_from": [],
     "version": "0.1.0"
   },
   {
@@ -74,6 +78,7 @@
       "ai-log-triage",
       "federal-guidance-library"
     ],
+    "extracted_from": [],
     "version": "0.1.0"
   },
   {
@@ -90,6 +95,7 @@
       "recall",
       "saas-starter"
     ],
+    "extracted_from": [],
     "version": "0.1.0"
   },
   {
@@ -102,7 +108,8 @@
     "languages": [
       "python"
     ],
-    "consumers": [
+    "consumers": [],
+    "extracted_from": [
       "codeforge",
       "saas-starter"
     ],
