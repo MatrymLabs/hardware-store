@@ -1,5 +1,5 @@
 packet_id: CX-005
-pr_url: pending
+pr_url: https://github.com/MatrymLabs/hardware-store/pull/34
 status: BLOCKED
 
 summary: >
