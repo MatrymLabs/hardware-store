@@ -2,7 +2,7 @@
 
 ```yaml
 packet_id: CX-004
-pr_url: pending
+pr_url: https://github.com/MatrymLabs/hardware-store/pull/29
 status: COMPLETE
 commands_run:
   - command: pytest -q catalog/applied-once/tests/test_contract.py
