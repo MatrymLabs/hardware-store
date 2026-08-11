@@ -31,7 +31,16 @@ hardware_store = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["tests"]
+# The catalogue is collected too. It was not, and for a year the Store's gate reported PASS while
+# running none of the 103 contract tests that define what its Parts promise. `retry`,
+# `typed-settings` and `circuit-breaker` were CERTIFIED and consumed by real repositories on the
+# strength of contracts CI had never executed.
+#
+# importlib import mode is what makes that possible: every Part names its test file
+# `test_contract.py` by convention, and the legacy prepend mode resolves all of them to one module
+# name and collides. Scoping the gate down to `tests/` hid that collision instead of solving it.
+testpaths = ["tests", "catalog"]
+addopts = "--import-mode=importlib"
 # Fixtures are mini-Stores exercised via store_check, never collected directly.
 norecursedirs = ["fixtures", ".venv", "build"]
 

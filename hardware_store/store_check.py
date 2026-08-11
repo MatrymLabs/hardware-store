@@ -160,7 +160,11 @@ def check_certified_gate(cards: list[sl.Card], threshold: int, report: sl.Report
 
 
 def check_consumers_resolve(cards: list[sl.Card], fleet_root: Path, report: sl.Report) -> None:
-    for card in (c for c in cards if c.is_certified):
+    # EVERY card, not just certified ones. This ran on `c.is_certified` only, which exempted the
+    # four CANDIDATE Parts, and those were precisely the four listing consumers that had never
+    # cited them. The check skipped the population the error lived in, so it reported clean about
+    # the parts it had already verified and silent about the rest.
+    for card in cards:
         for consumer in card.consumers:
             path = str(consumer.get("path", "")).strip()
             if not path:
@@ -176,15 +180,54 @@ def check_consumers_resolve(cards: list[sl.Card], fleet_root: Path, report: sl.R
                 )
                 continue
             target = fleet_root / path
-            if not target.exists():
+            in_git = _tracked_in_repo(fleet_root / consumer_repo, path, consumer_repo)
+            if in_git is False:
+                report.note("consumer-resolves", card.slug,
+                            f"consumer path is not in {consumer_repo}'s git tree: {path}")
+                continue
+            if in_git is True and not target.exists():
+                # Present in git, absent on disk: the checkout is stale, not the claim wrong.
+                report.note("consumer-resolves", card.slug,
+                            f"[environment] {path} is in git but not in this checkout of "
+                            f"{consumer_repo}; citation unverified here", severity="unverified")
+                continue
+            if in_git is None and not target.exists():
                 report.note("consumer-resolves", card.slug,
                             f"consumer path does not exist under the fleet root: {path}")
                 continue
             if not _path_imports_part(target, card):
+                # FAIL, not warn. A consumer that does not cite the Part is a reuse claim with no
+                # evidence behind it, and the Store's whole assertion is that reuse is evidenced.
+                # As a warning this said nothing loudly enough to act on: four of seven Parts
+                # listed consumers that had never cited them, and every one of those entries was
+                # an ORIGIN filed in the adopters' column. Those moved to `extracted_from`, which
+                # is the honest field for them, and what remains here must earn the word consumer.
                 report.note("consumer-resolves", card.slug,
-                            f"consumer {path} lacks a matching provenance citation for "
-                            f"{card.part_id}", severity="warn")
+                            f"consumer {path} does not cite {card.part_id}, so the reuse claim "
+                            f"has no evidence. Cite the part id, or move it to extracted_from "
+                            f"if the Part came out of it")
 
+
+
+def _tracked_in_repo(repo_dir: Path, path: str, repo: str) -> bool | None:
+    """Is this path in the repo's default branch? None when git cannot answer.
+
+    The gate asked the FILESYSTEM, so its verdict depended on which branch a sibling checkout
+    happened to sit on. On 2026-08-12 it failed `typed-settings` because a `recall` checkout was
+    two commits behind, while the file was on origin/main the whole time. A consumer claim is
+    about the repository, and only git knows what the repository contains.
+    """
+    if not (repo_dir / ".git").exists():
+        return None
+    rel = path.split("/", 1)[1] if path.startswith(f"{repo}/") else path
+    try:
+        done = subprocess.run(  # nosec B603 -- fixed argv, shell=False, read-only
+            ["git", "-C", str(repo_dir), "cat-file", "-e", f"origin/main:{rel}"],
+            capture_output=True, timeout=30, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return done.returncode == 0
 
 def _path_imports_part(target: Path, card: sl.Card) -> bool:
     """True if the consumer file/dir cites the Part's exact permanent identity."""

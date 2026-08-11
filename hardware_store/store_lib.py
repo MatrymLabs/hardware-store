@@ -89,6 +89,18 @@ class Card:
         return [str(i.get("language", "")) for i in self.implementations]
 
     @property
+    def extracted_from(self) -> list[dict]:
+        """Code the Part came OUT of. Provenance, never adoption.
+
+        A Part is extracted on the second occurrence and certified on the second CONSUMER, and
+        those are different thresholds. Holding both facts in `current_consumers` is what let this
+        catalogue claim seven consumers while three of its Parts had none: every entry that failed
+        to cite its part id was an origin filed in the adopters' column.
+        """
+        origins = self.data.get("extracted_from", [])
+        return [c for c in origins if isinstance(c, dict)]
+
+    @property
     def consumers(self) -> list[dict]:
         cons = self.data.get("current_consumers", [])
         return list(cons) if isinstance(cons, list) else []
@@ -180,6 +192,7 @@ def registry_entry(card: Card) -> dict:
         "maturity": card.maturity,
         "languages": card.languages,
         "consumers": [str(c.get("repo", "")) for c in card.consumers],
+        "extracted_from": [str(c.get("repo", "")) for c in card.extracted_from],
         "version": version,
     }
 
