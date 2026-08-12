@@ -1,7 +1,7 @@
 +++
 part_id = "PRT-0006"
 canonical_name = "typed-settings"
-capability = "Declare what a process needs from its environment, then load it once into an immutable, type-coerced, validated view. A field marked secret MAY NOT carry a default, so a missing secret is a startup failure rather than a guessable fallback. Every problem in the environment is reported together, naming the environment variable."
+capability = "Declare what a process needs from its environment, then load it once into an immutable, type-coerced, validated view. A field marked secret is always redacted; a default requires the explicit dev_default_ok opt-out. Every problem in the environment is reported together, naming the environment variable."
 category = "Development"
 maturity = "CERTIFIED"
 contract = "contract/typed_settings.py"
@@ -12,7 +12,7 @@ security = "the reason this Part exists. A secret field with a default is reject
 accessibility = "n/a (library primitive)"
 performance = "UNMEASURED, and certification proceeded without it as a recorded condition of RD-2026-0014, not as an oversight. Loading is O(fields) once per process and cached by the consumer; it is not on any hot path. No performance claim may cite this Part until a number exists."
 failure_modes = [
-  "SettingsError at DECLARATION when a field is marked secret and given a default (a default is a hardcoded secret whenever the variable is unset)",
+  "SettingsError at DECLARATION when a field is marked secret and given a default without dev_default_ok (a default is a hardcoded secret whenever the variable is unset)",
   "SettingsError at LOAD when a required field is absent, naming the ENVIRONMENT VARIABLE rather than the attribute, because the operator reading it is looking at a deploy config",
   "SettingsError at LOAD when a value cannot be coerced to the declared type, naming the variable",
   "SettingsError reports EVERY problem found, not the first: a loader that stops at the first omission turns one deploy into five",

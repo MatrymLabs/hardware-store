@@ -67,9 +67,10 @@ def field(
     default: Any = MISSING,
     secret: bool = False,
     env: str | None = None,
+    dev_default_ok: bool = False,
 ) -> _Field:
-    """Declare a setting, rejecting an unsafe secret fallback immediately."""
-    if secret and default is not MISSING:
+    """Declare a setting, rejecting an unsafe secret fallback unless explicitly opted out."""
+    if secret and default is not MISSING and not dev_default_ok:
         raise SettingsError(f"secret field {name!r} may not carry a default")
     return _Field(name=name, type=type_, default=default, secret=secret, env=env or name.upper())
 
