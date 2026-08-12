@@ -100,10 +100,49 @@ what_a_card_must_contain: >
     into one word so a screen's worth of map fits a cache line" is a Part. "The SNES PPU has four
     background layers" is a hardware fact and belongs nowhere in this Store.
 
+amendment_1: >
+    AMENDED 2026-08-12, after Codex correctly BLOCKED on it for the third time in one day, and for
+    the third time the fault is the order's.
+
+    `tests/test_gate_covers_the_catalogue.py::test_every_part_in_the_registry_has_contract_tests`
+    asserts that EVERY registry entry has runnable contract tests. It predates STUDIED and knows
+    nothing about maturity: measured, `registry=4 maturity-aware=0`. Thirteen STUDIED entries have
+    no contract by design, so it fails on all thirteen at once:
+
+      AssertionError: registered Parts with no contract tests: ['bank-and-memory-map',
+      'checksummed-save-slot', 'compression-as-data-design', ...]
+
+    The order then forbade adding tests and excluded that file, so it required something it also
+    forbade. That is the Dispatch Law's simultaneous-satisfiability half for the third time today.
+
+    THE ROOT DEFECT IS CX-019's, NOT THIS ORDER'S. CX-019 taught `store_check` that a STUDIED card
+    needs no code and its allowlist covered `tests/test_store_check.py` only. A SECOND test file
+    asserts the same property from a different angle and nobody taught it. The habit is the one this
+    Coordinator wrote into CX-010's amendment this afternoon and then repeated twice: scope an
+    allowlist from the module being changed rather than from the set of artifacts that assert on its
+    behaviour. `make packets` cannot catch it and does not claim to.
+
+    The grep that would have caught it, run now rather than earlier:
+      grep -rln 'registry' tests/   ->  test_promote, test_store_check, test_gate_covers_the_catalogue
+      of those, maturity-aware:         test_promote yes, test_store_check yes, the third NO
+
 contract_tests: >
-    No new test code. The gate IS the test: `store_check` already enforces STUDIED's three
-    provenance fields, and CX-019's suite proves it. What must be shown instead is that thirteen
-    real cards pass it, and that the gate still refuses a defective one.
+    ONE change, and it is a correction to an existing test, not new test code.
+
+    `test_every_part_in_the_registry_has_contract_tests` must exempt STUDIED entries. Its docstring
+    reasoning stays true for everything else: "a registry entry with no runnable contract is a claim
+    with no evidence behind it." A STUDIED entry makes no such claim; it claims to be a written-down
+    pattern, which is why CX-019 gave it three provenance fields to satisfy instead.
+
+    THE EXEMPTION MUST BE EXPLICIT AND ANNOUNCED, never a silent skip that quietly shrinks the
+    population. Doctrine section 5: a silent exemption reads as coverage.
+
+    Add, in the same file, the guard that keeps this from becoming "the test stopped asking":
+      a CANDIDATE or CERTIFIED registry entry with no contract tests must STILL fail.
+    Prove it by temporarily flipping one new card to CANDIDATE, watching the test fail, and flipping
+    it back. Paste both transitions.
+
+    Everything else in this order is unchanged: no implementation, no new Part tests, no code.
 
 verification_command: |
     cd hardware-store
@@ -159,5 +198,6 @@ watch_for: >
 file_allowlist:
   - catalog/                                   # NEW cards only; no existing card modified
   - registry.json                              # the mirror, regenerated with them
+  - tests/test_gate_covers_the_catalogue.py    # AMENDED: teach it STUDIED, and guard the exemption
   - handoff/CX-020/RETURN.md                   # NEW, explicitly authorised
 ```
