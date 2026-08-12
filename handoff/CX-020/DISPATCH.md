@@ -1,5 +1,7 @@
 # DISPATCH CX-020
 
+**Status:** LANDED, hardware-store #48, 2026-08-12. Amended once after a correct Codex block, then re-verified independently: the CANDIDATE guard was re-run against registry.json, which is what the test actually reads.
+
 ```yaml
 packet_id:            CX-020
 title:                File the studied patterns as cards, so a search can find them
