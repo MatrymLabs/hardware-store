@@ -26,7 +26,7 @@ CATEGORIES: tuple[str, ...] = (
 )
 
 #: The maturity ladder. Promotion up it is R&D's call, never a stream's.
-MATURITIES: tuple[str, ...] = ("CANDIDATE", "CERTIFIED", "FLEET_CORE", "DEPRECATED")
+MATURITIES: tuple[str, ...] = ("STUDIED", "CANDIDATE", "CERTIFIED", "FLEET_CORE", "DEPRECATED")
 
 #: Maturities that must clear the certification gate (rd_certification + real
 #: consumer + mutation score at/above threshold).
@@ -35,8 +35,10 @@ CERTIFIED_MATURITIES: frozenset[str] = frozenset({"CERTIFIED", "FLEET_CORE"})
 #: Fields every card must carry, whatever its maturity.
 REQUIRED_FIELDS: tuple[str, ...] = (
     "part_id", "canonical_name", "capability", "category", "maturity",
-    "contract", "failure_modes", "tests", "provenance", "implementations",
+    "failure_modes", "provenance",
 )
+
+CODE_FIELDS: tuple[str, ...] = ("contract", "tests", "implementations")
 
 #: Deprecated fleet vocabulary. Banned anywhere in the Store (style_guide.md).
 DEPRECATED_VOCAB: tuple[str, ...] = (
