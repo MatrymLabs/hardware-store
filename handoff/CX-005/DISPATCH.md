@@ -2,6 +2,7 @@
 
 ```yaml
 packet_id:            CX-005
+status:               LANDED
 title:                A contract must test the property its CARD claims
 stream:               hardware-store
 owner:                Codex
