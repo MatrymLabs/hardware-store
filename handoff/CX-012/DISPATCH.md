@@ -1,5 +1,7 @@
 # DISPATCH CX-012
 
+**Status:** LANDED, hardware-store #42, 2026-08-12. Amended after a correct Codex block, then re-verified independently by the Coordinator before merge.
+
 ```yaml
 packet_id:            CX-012
 title:                secret=True must mean redacted, and stop forcing consumers to choose
