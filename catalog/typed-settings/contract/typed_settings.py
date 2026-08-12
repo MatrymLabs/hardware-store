@@ -5,15 +5,14 @@ any language provides the same surfaces with the same semantics: a DECLARATION o
 needs from its environment, and a LOADER that turns the environment into a validated, immutable
 view of it, or fails loud naming what is missing.
 
-  Field(name, type, default=MISSING, secret=False, env=None)
+  Field(name, type, default=MISSING, secret=False, env=None, dev_default_ok=False)
       One declared setting. `name` is the attribute; `env` is the environment variable (defaulting
       to the upper-cased name). `type` is the target type for coercion.
 
       A field with no `default` is REQUIRED.
-      A field with `secret=True` MAY NOT carry a default. Construction of such a Field FAILS LOUD
-      (SettingsError). This is the whole point of the Part: "dev-only-change-me" as a fallback IS a
-      hardcoded secret, and two repositories in this fleet shipped exactly that, one of them while
-      documenting the opposite.
+  A field with `secret=True` MAY NOT carry a default unless the declaration also sets the explicit
+  `dev_default_ok=True` escape hatch. Without that opt-out, construction FAILS LOUD (SettingsError).
+  With it, the field remains redacted in every representation.
 
   load(fields, environ) -> Settings
       Read `environ` ONCE, coerce each declared field to its type, and return an immutable
@@ -100,8 +99,9 @@ class SettingsLoader(Protocol):
         default: Any = MISSING,
         secret: bool = False,
         env: str | None = None,
+        dev_default_ok: bool = False,
     ) -> Field:
-        """Declare one field. Raises SettingsError if `secret=True` and a default is given."""
+        """Declare one field. Secret defaults require explicit dev_default_ok."""
         ...
 
     def load(self, fields: list[Field], environ: dict[str, str]) -> Settings:
