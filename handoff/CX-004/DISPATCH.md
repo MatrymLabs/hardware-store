@@ -2,6 +2,7 @@
 
 ```yaml
 packet_id:            CX-004
+status:               LANDED
 title:                PART ORDER, a durable exactly-once record (applied-once ledger)
 stream:               hardware-store
 owner:                Codex
