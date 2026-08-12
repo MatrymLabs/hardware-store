@@ -1,5 +1,7 @@
 # DISPATCH CX-011
 
+**Status:** LANDED, hardware-store #38, 2026-08-12. Re-verified independently by the Coordinator: calibration re-run, red then green, before merge.
+
 ```yaml
 packet_id:            CX-011
 title:                The Store cannot see half the citations it asks for
