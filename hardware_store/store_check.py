@@ -231,10 +231,17 @@ def _tracked_in_repo(repo_dir: Path, path: str, repo: str) -> bool | None:
 
 def _path_imports_part(target: Path, card: sl.Card) -> bool:
     """True if the consumer file/dir cites the Part's exact permanent identity."""
-    part_id = card.part_id.strip()
-    if not part_id:
+    identities = [card.part_id.strip()]
+    provenance = card.data.get("provenance", {})
+    if isinstance(provenance, dict):
+        identities.append(str(provenance.get("rd_id", "")).strip())
+    identities = [identity for identity in identities if identity]
+    if not identities:
         return False
-    citation = re.compile(rf"(?<![A-Za-z0-9]){re.escape(part_id)}(?![A-Za-z0-9])")
+    citation = re.compile(
+        rf"(?<![A-Za-z0-9])(?:{'|'.join(re.escape(identity) for identity in identities)})"
+        rf"(?![A-Za-z0-9])"
+    )
     files = [target] if target.is_file() else [p for p in target.rglob("*.py")
                                                if not (SKIP_DIRS & set(p.parts))]
     for py in files:

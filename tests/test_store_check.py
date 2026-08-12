@@ -275,6 +275,28 @@ def test_consumer_citing_a_different_part_id_is_reported(tmp_path: Path) -> None
     assert any("PRT-0005" in f.message for f in findings)
 
 
+def test_consumer_citing_only_rd_provenance_id_is_accepted(tmp_path: Path) -> None:
+    real = tmp_path / "real.py"
+    real.write_text('"""extracted from RD-2026-0009"""\n', encoding="utf-8")
+    card = sl.Card(slug="example-reverser", path=tmp_path / "CARD.md", data={
+        "canonical_name": "example_reverser",
+        "part_id": "PRT-0005",
+        "provenance": {"rd_id": "RD-2026-0009"},
+    })
+    assert sc._path_imports_part(real, card) is True
+
+
+def test_consumer_citing_neither_part_identity_is_rejected(tmp_path: Path) -> None:
+    fake = tmp_path / "fake.py"
+    fake.write_text("x = 1\n", encoding="utf-8")
+    card = sl.Card(slug="example-reverser", path=tmp_path / "CARD.md", data={
+        "canonical_name": "example_reverser",
+        "part_id": "PRT-0005",
+        "provenance": {"rd_id": "RD-2026-0009"},
+    })
+    assert sc._path_imports_part(fake, card) is False
+
+
 def test_an_uncited_consumer_FAILS_rather_than_warns(tmp_path: Path) -> None:
     """This test previously asserted the opposite, and that is how the defect survived.
 
