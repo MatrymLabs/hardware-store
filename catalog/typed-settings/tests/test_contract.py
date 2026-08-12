@@ -43,6 +43,33 @@ def test_a_secret_field_without_a_default_is_accepted(loader) -> None:
     assert field.secret is True
 
 
+def test_a_secret_field_with_opted_in_default_is_accepted(loader) -> None:
+    field = loader.field("stripe_api_key", str, default="sk_test_dev",
+                         secret=True, dev_default_ok=True)
+    assert field.required is False
+    assert field.secret is True
+
+
+def test_an_opted_in_secret_default_is_redacted(loader) -> None:
+    field = loader.field("stripe_api_key", str, default="sk_test_dev",
+                         secret=True, dev_default_ok=True)
+    settings = loader.load([field], {"STRIPE_API_KEY": "sk_live_51REALPRODUCTIONKEY"})
+    for rendered in (repr(settings), str(settings)):
+        assert "sk_live_51REALPRODUCTIONKEY" not in rendered
+        assert "stripe_api_key='***'" in rendered or "stripe_api_key=***" in rendered
+
+
+def test_a_secret_default_without_opt_out_still_raises(loader) -> None:
+    with pytest.raises(SettingsError):
+        loader.field("stripe_api_key", str, default="sk_test_dev", secret=True)
+
+
+def test_a_non_secret_default_is_not_redacted(loader) -> None:
+    field = loader.field("endpoint", str, default="http://localhost")
+    settings = loader.load([field], {})
+    assert "http://localhost" in repr(settings)
+
+
 def test_a_non_secret_may_carry_a_default(loader) -> None:
     """Inference I2. Requiring every value makes local development hostile and pushes people to
     commit .env files, which defeats the point."""
