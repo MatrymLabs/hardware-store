@@ -55,7 +55,15 @@ def test_every_part_in_the_registry_has_contract_tests() -> None:
     registry = json.loads((ROOT / "registry.json").read_text(encoding="utf-8"))
     entries = registry if isinstance(registry, list) else registry.get("parts", [])
     have = set(parts_with_contract_tests())
-    missing = sorted(e["slug"] for e in entries if e.get("slug") and e["slug"] not in have)
+    # STUDIED is an explicit, announced exemption: it records a written pattern, not an
+    # implementation claim. CANDIDATE and CERTIFIED still require runnable contract evidence.
+    missing = sorted(
+        e["slug"]
+        for e in entries
+        if e.get("slug")
+        and e.get("maturity") != "STUDIED"
+        and e["slug"] not in have
+    )
     assert not missing, f"registered Parts with no contract tests: {missing}"
 
 
