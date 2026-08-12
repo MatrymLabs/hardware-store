@@ -1,15 +1,10 @@
 # RETURN CX-020
 
-status: BLOCKED
-tests_passing: no
+status: COMPLETE
+tests_passing: yes
 
-## Block
-
-The required whole gate was run after adding the thirteen STUDIED cards and their registry
-mirror. It fails because the existing catalogue-coverage test requires every registry entry to
-have runnable contract tests, while this order explicitly forbids new test code and says STUDIED
-cards have no contract tests. Resolving this requires changing a file outside the allowlist
-(the gate test or the test policy), so work stops here without widening scope.
+The amended allowlist authorizes the catalogue-coverage correction. STUDIED entries are explicitly
+exempt; CANDIDATE and CERTIFIED entries remain required to have runnable contract tests.
 
 ## Verification command (actual output)
 
@@ -28,27 +23,13 @@ All checks passed!
 /home/josh/Projects/MatrymLabs/hardware-store/.venv/bin/python -m mypy hardware_store
 Success: no issues found in 7 source files
 /home/josh/Projects/MatrymLabs/hardware-store/.venv/bin/python -m pytest -q
-.................F...................................................... [ 42%]
+........................................................................ [ 42%]
 ........................................................................ [ 84%]
 ...........................                                              [100%]
-=================================== FAILURES ===================================
-______________ test_every_part_in_the_registry_has_contract_tests ______________
-
-    def test_every_part_in_the_registry_has_contract_tests() -> None:
-        """A registry entry with no runnable contract is a claim with no evidence behind it."""
-        import json
-
-        registry = json.loads((ROOT / "registry.json").read_text(encoding="utf-8"))
-        entries = registry if isinstance(registry, list) else registry.get("parts", [])
-        have = set(parts_with_contract_tests())
-        missing = sorted(e["slug"] for e in entries if e.get("slug") and e["slug"] not in have)
->       assert not missing, f"registered Parts with no contract tests: {missing}"
-E       AssertionError: registered Parts with no contract tests: ['bank-and-memory-map', 'checksummed-save-slot', 'compression-as-data-design', 'constrained-map-streaming', 'dictionary-text-encoding', 'frame-time-budget', 'layer-composition', 'metatile-hierarchy', 'offset-per-tile', 'palette-discipline', 'sprite-budget', 'tilemap-bit-packing', 'voluntary-budget']
-E       assert not ['bank-and-memory-map', 'checksummed-save-slot', 'compression-as-data-design', 'constrained-map-streaming', 'dictionary-text-encoding', 'frame-time-budget', ...]
-
-tests/test_gate_covers_the_catalogue.py:59: AssertionError
-1 failed, 170 passed in 4.19s
-make: *** [Makefile:32: test] Error 1
+171 passed in 4.16s
+/home/josh/Projects/MatrymLabs/hardware-store/.venv/bin/python -m hardware_store.store_check
+Hardware Store integrity check :: /home/josh/Projects/MatrymLabs/hardware-store-codex
+VERDICT: PASS (0 failing, 26 warning)
 ```
 
 The targeted store integrity check itself passes, with the expected STUDIED skip warnings:
@@ -60,16 +41,18 @@ VERDICT: PASS (0 failing, 26 warning)
 
 ## Scope and diff
 
-The only implementation paths changed are the thirteen new `catalog/*/CARD.md` files, the
-allowlisted `registry.json` mirror, and this RETURN. No existing card, `hardware_store/`, or test
-file was modified.
+The thirteen new `catalog/*/CARD.md` files, the allowlisted `registry.json` mirror, the amended
+allowlisted catalogue-coverage test, and this RETURN are the only changed paths. No existing card
+or `hardware_store/` file was modified.
 
 ```text
-git diff --stat
+ handoff/CX-020/RETURN.md                | 94 ++++++++++++++++++++-------------
+ tests/test_gate_covers_the_catalogue.py | 10 +++-
+ 2 files changed, 65 insertions(+), 39 deletions(-)
 ```
 
-The new files are untracked until the blocked work is committed; `git status --short` lists only
-the thirteen allowlisted card directories, `registry.json`, and this RETURN.
+The earlier card and registry commit is unchanged; this repair commit touches only the
+allowlisted test and RETURN.
 
 ## Reuse search
 
@@ -79,10 +62,31 @@ directories, seven carded, no Part covering any of these subjects. Working Shelf
 `minimap`; none is a tilemap, save-slot, text-encoding, frame-budget, or related Part. No Part was
 consumed.
 
+## Calibration transitions
+
+The maturity guard was calibrated by temporarily changing `metatile-hierarchy` from STUDIED to
+CANDIDATE. The test failed as required:
+
+```text
+........F.
+FAILED tests/test_gate_covers_the_catalogue.py::test_every_part_in_the_registry_has_contract_tests
+AssertionError: registered Parts with no contract tests: ['metatile-hierarchy']
+1 failed, 9 passed
+```
+
+After restoring STUDIED, the same test file passed:
+
+```text
+..........                                                               [100%]
+10 passed in 3.15s
+```
+
+The taint calibration from the original implementation remains valid and is retained below.
+
 ## Unverified
 
-The whole gate remains unverified as passing because of the allowlist contradiction. The required
-searches and taint calibration did run and are recorded below.
+CI has not been independently rerun in this session; the command that resolves that is the
+repository's pull-request CI workflow on the merge commit.
 
 ```text
 python -m hardware_store.store_search "" --no-log
@@ -137,5 +141,5 @@ resolved; this is an extraction signal for a future generator order.
   consumed.
 - Recurrence check: the registry-mirror/test-coverage coupling has already blocked CX-012-style
   card changes; this is the same class of stale gate boundary.
-- Verdict note: BLOCKED. The cards are within the stated allowlist, but `make check` cannot certify
-  them without an out-of-allowlist gate or test-policy change.
+- Verdict note: COMPLETE. The explicit STUDIED exemption is guarded by a failing CANDIDATE
+  transition, and the full local gate passes.
