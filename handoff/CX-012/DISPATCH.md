@@ -20,8 +20,24 @@ goal: >
 boundary: >
   This is a CERTIFIED contract. `catalog/typed-settings/CARD.md` is in the allowlist because the
   contract's stated semantics change and a card that describes the old behaviour is a false claim.
-  Every OTHER card, the registry, and `hardware_store/` are excluded: this order changes one Part,
-  not the Store.
+  Every OTHER card and `hardware_store/` are excluded: this order changes one Part, not the Store.
+
+  AMENDED 2026-08-12, after Codex correctly BLOCKED on it. This clause used to exclude
+  `registry.json` too, which made the order UNSATISFIABLE: the registry is a MIRROR of the cards and
+  `store_check`'s `registry-mirror` enforces it, so changing a card necessarily makes it stale.
+  Reproduced independently before amending:
+
+    FAIL [registry-mirror] -: registry.json is stale: same parts, but a field disagrees with the cards
+    VERDICT: FAIL (1 failing, 0 warning)
+
+  `registry.json` is now IN the allowlist and must be updated in the SAME commit as the card.
+
+  Recording the second defect as well, because it is the more interesting one: the first amendment
+  added the registry to the allowlist and its edit to THIS clause was lost when the script that
+  wrote both died between them. For a few hours the order included the registry in its allowlist and
+  excluded it in its boundary. An order that contradicts itself is the same defect the Workshop
+  keeps finding, committed inside the instrument meant to prevent it, and `make packets` read it as
+  READY because no check compares a boundary's prose against its own allowlist.
   Consumers are excluded and are NOT to be migrated here. Existing declarations must keep working
   unchanged, which is the compatibility requirement below, and a consumer that wants the new
   escape hatch adopts it in its own repository on its own schedule.
