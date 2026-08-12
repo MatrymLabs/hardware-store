@@ -85,7 +85,7 @@
     "part_id": "PRT-0006",
     "slug": "typed-settings",
     "canonical_name": "typed-settings",
-    "capability": "Declare what a process needs from its environment, then load it once into an immutable, type-coerced, validated view. A field marked secret MAY NOT carry a default, so a missing secret is a startup failure rather than a guessable fallback. Every problem in the environment is reported together, naming the environment variable.",
+    "capability": "Declare what a process needs from its environment, then load it once into an immutable, type-coerced, validated view. A field marked secret is always redacted; a default requires the explicit dev_default_ok opt-out. Every problem in the environment is reported together, naming the environment variable.",
     "category": "Development",
     "maturity": "CERTIFIED",
     "languages": [
