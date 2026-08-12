@@ -74,7 +74,19 @@ approval_gates: >
 rollback: >
   git revert. One implementation, one contract document, one card, additive tests.
 
+finding_filed_by_this_amendment: >
+  THE MIRROR HAS NO GENERATOR. `registry.json` must equal the catalogue and `store_check` enforces
+  it, but no `make registry` target exists and nothing in `hardware_store/` writes the file. The
+  only way to satisfy the check is to hand-edit the mirror to match, which is precisely the fragile
+  pattern the Workshop keeps paying for: codeforge-shelf's pyproject and workflows were hand-edited
+  on 2026-08-08 and the next pour silently reverted both.
+
+  Hand-edit it HERE, because it is the only path that exists and this order must close. Then say so
+  in the RETURN as an extraction signal. Building the generator is its own order and is NOT in
+  scope; do not start it.
+
 file_allowlist:
+  - registry.json                                        # AMENDED: the mirror, updated with the card
   - catalog/typed-settings/impl/python/typed_settings_impl.py
   - catalog/typed-settings/contract/typed_settings.py
   - catalog/typed-settings/tests/test_contract.py       # ADDITIVE only
