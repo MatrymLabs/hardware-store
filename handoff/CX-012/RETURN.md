@@ -4,6 +4,18 @@ tests_passing: no
 
 ## Blocker
 
+The required whole gate also fails at the Store integrity check because changing the allowlisted
+Certified card semantics makes the generated registry stale. The registry is explicitly outside
+this order's allowlist, so this is a second blocker and was not widened:
+
+```text
+167 passed in 4.03s
+Hardware Store integrity check :: /home/josh/Projects/MatrymLabs/hardware-store-codex
+  FAIL [registry-mirror] -: registry.json is stale: same parts, but a field disagrees with the cards
+VERDICT: FAIL (1 failing, 0 warning)
+make: *** [Makefile:35: store-check] Error 1
+```
+
 The additive contract implementation and 20 contract tests pass, but the required mutation gate
 cannot execute against this checkout with the pinned mutmut tool. Verbatim command and output:
 
