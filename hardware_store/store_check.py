@@ -83,6 +83,15 @@ def check_schema(cards: list[sl.Card], report: sl.Report) -> None:
     for card in cards:
         for missing in (f for f in sl.REQUIRED_FIELDS if not card.data.get(f)):
             report.note("card-schema", card.slug, f"missing required field '{missing}'")
+        if card.maturity != "STUDIED":
+            for missing in (f for f in sl.CODE_FIELDS if not card.data.get(f)):
+                report.note("card-schema", card.slug, f"missing required field '{missing}'")
+        else:
+            provenance = card.data.get("provenance", {})
+            for missing in ("source_studied", "taint_class", "clean_room"):
+                if not isinstance(provenance, dict) or not provenance.get(missing):
+                    report.note("card-schema", card.slug,
+                                f"STUDIED card missing required provenance field '{missing}'")
         if card.data.get("category") not in sl.CATEGORIES:
             report.note("card-schema", card.slug,
                         f"category '{card.data.get('category')}' is not a known "
@@ -111,6 +120,11 @@ def check_registry_mirror(root: Path, entries: list[dict], cards: list[sl.Card],
 
 def check_impls(root: Path, cards: list[sl.Card], report: sl.Report) -> None:
     for card in cards:
+        if card.maturity == "STUDIED":
+            report.note("impl-exists", card.slug,
+                        "STUDIED card: implementation check skipped (pattern has no code)",
+                        severity="warn")
+            continue
         if not card.implementations:
             report.note("impl-exists", card.slug,
                         "card lists no implementations (a card with no code)")
@@ -126,6 +140,11 @@ def check_impls(root: Path, cards: list[sl.Card], report: sl.Report) -> None:
 
 def check_tests(root: Path, cards: list[sl.Card], run_tests: bool, report: sl.Report) -> None:
     for card in cards:
+        if card.maturity == "STUDIED":
+            report.note("tests-exist", card.slug,
+                        "STUDIED card: contract test check skipped (pattern has no code)",
+                        severity="warn")
+            continue
         tests_dir = card.path.parent / "tests"
         test_files = list(tests_dir.glob("test_*.py")) if tests_dir.is_dir() else []
         if not test_files:

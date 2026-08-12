@@ -40,6 +40,38 @@ def _checks(report: sl.Report) -> set[str]:
     return {f.check for f in report.failures}
 
 
+def _make_studied(root: Path, *, remove: str | None = None) -> None:
+    card = _card(root)
+    text = card.read_text(encoding="utf-8")
+    text = text.replace('maturity = "CANDIDATE"', 'maturity = "STUDIED"')
+    text = text.replace(
+        '[provenance]\n',
+        '[provenance]\nsource_studied = "engineering study notes"\ntaint_class = "SAFE"\n'
+        'clean_room = "not required; no proprietary material read"\n',
+        1,
+    )
+    if remove:
+        text = "\n".join(line for line in text.splitlines() if not line.startswith(f"{remove} ="))
+    card.write_text(text, encoding="utf-8")
+    _sync_registry(root)
+
+
+def test_studied_pattern_without_code_passes_with_provenance(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _make_studied(root)
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+    assert report.verdict == "PASS", [f.__dict__ for f in report.findings]
+    assert any("STUDIED card" in f.message for f in report.warnings)
+
+
+def test_studied_pattern_missing_provenance_fails_by_name(tmp_path: Path) -> None:
+    root = _stage(tmp_path)
+    _make_studied(root, remove="taint_class")
+    report = sc.run_check(root, root.parent, threshold=70, run_tests=False)
+    assert report.verdict == "FAIL"
+    assert any("taint_class" in f.message for f in report.failures)
+
+
 # --- The good fixture passes, tests actually run (CMD) ------------------------
 
 def test_pass_fixture_is_clean_and_tests_run() -> None:
