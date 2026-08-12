@@ -1,5 +1,7 @@
 # DISPATCH CX-019
 
+**Status:** LANDED, hardware-store #44, 2026-08-12. Amended after a correct Codex block, then re-verified independently by the Coordinator before merge.
+
 ```yaml
 packet_id:            CX-019
 title:                The Store cannot hold a pattern, and doctrine now says it must
