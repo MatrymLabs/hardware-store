@@ -1,5 +1,15 @@
 # Hardware Store control panel. Verbs DO, nouns SHOW. Gates only report; fix mutates.
 PY ?= .venv/bin/python
+
+# --- Gate caches: explicit, writable anywhere, identical for both benches.
+# ruff and mypy default to .ruff_cache/.mypy_cache in the working directory. On CX-021 that location
+# was not writable for one bench, which had to run the gate with environment prefixes and record
+# them in its return. An order naming `make check` while one bench decorates it has two commands
+# wearing one name, so the location is declared here. `?=`, never `=`: a caller that still needs to
+# redirect must be able to, and must be able to tell if it failed to.
+RUFF_CACHE_DIR ?= /tmp/matrymlabs-hardware-store-ruff-cache
+MYPY_CACHE_DIR ?= /tmp/matrymlabs-hardware-store-mypy-cache
+export RUFF_CACHE_DIR MYPY_CACHE_DIR
 PIP ?= .venv/bin/pip
 
 .PHONY: env fix lint typecheck test check store-check search help
