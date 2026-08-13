@@ -12,7 +12,7 @@ MYPY_CACHE_DIR ?= /tmp/matrymlabs-hardware-store-mypy-cache
 export RUFF_CACHE_DIR MYPY_CACHE_DIR
 PIP ?= .venv/bin/pip
 
-.PHONY: env fix lint typecheck test check store-check search help
+.PHONY: env fix lint typecheck test check registry store-check search help
 
 help:
 	@echo "env         create .venv and install dev tools"
@@ -40,6 +40,15 @@ typecheck:
 
 test:
 	$(PY) -m pytest -q
+
+# registry.json MIRRORS the cards and store_check enforces it. The generator has always existed as
+# store_lib.write_registry, reached by promote and consume, but never from the control panel - so a
+# card edited by hand left the mirror stale with hand-editing as the only visible way out. That is
+# the "fix the generator, never the file" rule failing for want of a target, not for want of a
+# generator. Twice filed as "the mirror has no generator", and twice wrong.
+registry:
+	@$(PY) -c "from pathlib import Path; from hardware_store.store_lib import write_registry; \
+	  n=len(write_registry(Path('.'))); print(f'registry: rebuilt from catalog/, {n} entries')"
 
 store-check:
 	$(PY) -m hardware_store.store_check
