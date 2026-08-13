@@ -1,0 +1,53 @@
+# The omni-code Part matrix. Canon MATRYM_WORKSHOP_CANON.md section 16.
+#
+# "Every trusted Part should be described first by its invariant, contract, inputs, outputs,
+#  failure modes, and Proof Run. Implementation language is secondary to the invariant."
+#
+# One row per Hardware Store Part, with a language lane for every runtime that consumes it.
+# `scripts/language_lane_gate.py` refuses a row whose lane names a language absent from
+# LANGUAGE_LANES.yaml, and a lane whose status is outside the canon's enum.
+#
+# THIS MATRIX IS DELIBERATELY SHORT, and the reason is on the record rather than implied. The
+# Certified Tier lives in the `hardware-store` repository, which is a separate repository outside
+# this Work Order's allowlist; canon section 7 says multi-repository work is split or explicitly
+# approved. One Part is filed here because it can be verified from inside this repository today.
+# Filing the rest is a follow-on Work Order in the Store, and until it runs this matrix is a
+# partial record that says so.
+#
+# lane status enum, canon section 16:
+#   not_started · candidate · reference · adapter · verified · consumer_proven · retired
+#   not_applicable
+
+version: 1
+owner: Josh Evans, Principal Engineer
+canon: MATRYM_WORKSHOP_CANON.md section 16
+complete: false
+completeness_note: >-
+  Covers Parts verifiable from the Workshop root only. The Certified Tier catalogue in the
+  hardware-store repository is not yet mirrored here.
+
+parts:
+  - part_id: FH-09
+    name: lexicon_gate
+    invariant: >-
+      A prohibited-term policy applied to a text yields exactly the occurrences the policy
+      forbids, and never an occurrence the policy exempts by scope or by inline suppression.
+    reference_language: python
+    supported_language_lanes:
+      - language: python
+        status: consumer_proven
+        implementation_path: scripts/lexicon_gate.py
+        fixture_path: scripts/test_lexicon_gate.py
+        proof_run: .venv/bin/python -m pytest scripts/test_lexicon_gate.py
+        consumers:
+          - scripts/check_nomenclature.py
+        known_faults: none observed
+      - language: typescript
+        status: not_started
+        implementation_path: null
+        fixture_path: null
+        proof_run: null
+        consumers: []
+        known_faults: >-
+          No second-runtime consumer exists, so no adapter is justified. Canon section 15: a
+          capability with one consumer is a watch-list entry, not a Part lane.
