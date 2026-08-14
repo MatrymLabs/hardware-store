@@ -93,13 +93,16 @@ lanes:
     note: Zero files. Arrives with the Godot client if that client is ruled into a Build.
 
   - language: kotlin
-    status: ungoverned
-    governance: []
+    status: governed
+    governance: [ktlint]
     note: >-
-      OPENED 2026-08-13 by RetroForge's Rider projection, codeforge #954,
-      native/rider-retroforge/. The build toolchain is live and needed no sudo: Rider's bundled
-      JBR 25.0.3 supplies javac and Gradle 9.1.0 supplies Kotlin 2.2.0, both in userspace. The
-      projection compiles and its four tests run and have been shown able to fail.
-      UNGOVERNED, not governed: nothing lints Kotlin and no CI job builds it, so the projection is
-      verified on one host only. Named at the moment the lane opened rather than discovered later,
-      which is the whole reason this register exists.
+      OPENED 2026-08-13 by RetroForge's Rider projection (codeforge #954) and GOVERNED 2026-08-14
+      (codeforge #958). It spent one day as `ungoverned`, named on the day it opened rather than
+      discovered later, which is the whole reason that status exists.
+      The instrument is ktlint 1.3.1 through the Gradle plugin, wired into `check` with
+      ignoreFailures off, and calibrated: a planted style violation turns the build red.
+      It runs in codeforge CI's `jvm` job on a runner that has never seen Rider, because the
+      projection had been verified only on the maker's Pi and a lane proven on one machine is a
+      claim about that machine.
+      Toolchain needs no sudo: Rider's bundled JBR supplies javac, the tracked Gradle wrapper
+      supplies Gradle and Kotlin. Debian ships gradle 4.4.1 and kotlin 1.3.31, both far too old.
