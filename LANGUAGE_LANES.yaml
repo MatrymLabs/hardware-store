@@ -93,6 +93,13 @@ lanes:
     note: Zero files. Arrives with the Godot client if that client is ruled into a Build.
 
   - language: kotlin
-    status: deferred
+    status: ungoverned
     governance: []
-    note: Zero files. No product requires it.
+    note: >-
+      OPENED 2026-08-13 by RetroForge's Rider projection, codeforge #954,
+      native/rider-retroforge/. The build toolchain is live and needed no sudo: Rider's bundled
+      JBR 25.0.3 supplies javac and Gradle 9.1.0 supplies Kotlin 2.2.0, both in userspace. The
+      projection compiles and its four tests run and have been shown able to fail.
+      UNGOVERNED, not governed: nothing lints Kotlin and no CI job builds it, so the projection is
+      verified on one host only. Named at the moment the lane opened rather than discovered later,
+      which is the whole reason this register exists.
