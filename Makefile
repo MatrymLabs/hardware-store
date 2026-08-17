@@ -1,5 +1,6 @@
 # Hardware Store control panel. Verbs DO, nouns SHOW. Gates only report; fix mutates.
-PY ?= .venv/bin/python
+PY ?= .venv/Scripts/python.exe
+JOBS ?= auto
 
 # --- Gate caches: explicit, writable anywhere, identical for both benches.
 # ruff and mypy default to .ruff_cache/.mypy_cache in the working directory. On CX-021 that location
@@ -39,7 +40,7 @@ typecheck:
 	$(PY) -m mypy hardware_store
 
 test:
-	$(PY) -m pytest -q
+	$(PY) -m pytest -n $(JOBS) -q
 
 # registry.json MIRRORS the cards and store_check enforces it. The generator has always existed as
 # store_lib.write_registry, reached by promote and consume, but never from the control panel - so a
