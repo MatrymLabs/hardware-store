@@ -67,6 +67,43 @@ is out of reach, but they are a summary and never a substitute.
 - **The Principal Engineer decides what lands.** Josh holds the standing merge grant and its terms;
   an agent unsure whether something breaks has already answered.
 
+## IN PLAIN TERMS, on every Bench Report
+
+**Every Bench Report ends with this section. Both Benches. It is not optional and not filler.**
+
+```
+IN PLAIN TERMS
+- What I actually did, in one or two sentences a non-specialist understands.
+- Why it mattered for the Build, in one sentence.
+- One thing worth knowing: the concept, pattern or tool this touched, named simply.
+```
+
+Rules that make it worth the three lines:
+
+- **No jargon without a plain-word gloss.** "I added a mutation test (a test that deliberately
+  breaks the code to prove the other tests would catch the break)."
+- **Explain the WHY.** The diff already says what. The why is the part that teaches.
+- **One concept per report, never a lecture.** Steady exposure beats a firehose.
+- **Be honest in plain terms too.** "This works but I am not certain it is the best approach
+  because X" is a valid and valuable plain-terms answer.
+- **Do not explain the Principal Engineer's own doctrine, architecture or methodology back to
+  him.** He is expert there. Teach the specific language, tool, algorithm or technique the task
+  touched.
+
+**This section is oversight as much as teaching.** If a Bench cannot say plainly what it did, the
+work is confused or the Bench is unsure, and the vagueness is the signal. If the "why" does not
+connect to the Build, the work may be drift that is correct only in isolation. The Principal
+Engineer catches both from the explanation alone, without reading every line.
+
+**"Teach me this"** is a standing command from the Principal Engineer about any report, decision,
+file, diff, term or instrument. Stop and give a full plain-language walkthrough: what it is from
+the ground up, why it exists and what breaks without it, how it works with a concrete example, how
+it connects to what is being built, the one durable takeaway, and one direction to go deeper.
+Assume intelligence, not prior knowledge. Reach for analogies from games, workshops, retro consoles
+and engineering, which is the world he already knows. Teaching a decision means defending it.
+
+Full doctrine: `.ai/TEACHING_LAYER.md` in the Workshop root.
+
 ## Reusable Part signals
 
 Every Bench Report carries four signals and none may be left blank. "None observed" is valid;
@@ -82,6 +119,78 @@ friction:
 First occurrence of a mechanism is logged only. **Second** occurrence opens a reusable Part
 candidate, and certification becomes meaningful at the second real consumer, because duplication is
 cheaper than the wrong abstraction. Promotion travels the Verdict Gate; there is no second path.
+
+## Prove safe before you destroy. MANDATORY, both Benches, until told otherwise.
+
+**Standing doctrine, 2026-08-15. It governs every irreversible act, not only GitHub repositories.**
+
+The ladder, and you take the highest rung that achieves the goal:
+
+```
+1. PULL DOWN     make a second copy first. A fetch costs seconds and cannot lose anything.
+2. DISABLE       stop a thing running without removing it. Reversible in one command.
+3. PRIVATE       remove it from view without removing it. Reversible.
+4. ARCHIVE       make it read-only and inactive. Reversible.
+5. DELETE        last, and only under the proof below.
+```
+
+**Proven-safe to delete means every commit, file or record exists somewhere else that is not the
+thing being deleted, and you re-verified that IMMEDIATELY BEFORE the act rather than earlier in the
+session.** State the count. "It should be fine" is not a proof and neither is a check from twenty
+minutes ago.
+
+**A Bench never performs step 5 without a per-item Principal Engineer stamp.** Not per batch. Per
+item. A stamp for a list is a stamp nobody read.
+
+**And check what the removal breaks before it breaks it.** On 2026-08-15 seven repositories went
+private in one pass; two of them are cloned by CI. It survived only because that workflow already
+used a deploy key. That was luck, and the check that would have made it knowledge costs one grep:
+
+```bash
+git grep -lniE "<the thing>" -- '.github/workflows/*' Makefile
+```
+
+**Removing a thing does not remove its claims.** Disabling two scanners left a README advertising a
+security badge for a scan that no longer ran, which is a false claim in the one public repository.
+When you disable, archive or delete something, grep for what still asserts it exists and fix the
+claim in the same change or restore the thing.
+
+**IN PLAIN TERMS applies here too.** An irreversible act reported without a plain-language sentence
+saying what is now gone and where the copy lives is not reported.
+
+## Blast radius: search the THING, not the spelling
+
+**A blast-radius search that finds one spelling of a thing has measured one spelling, not the
+thing.** Write this into every Build Sheet, and re-run it before trusting an allowlist.
+
+On 2026-08-15 an order to move `content/seeds/` shipped with a blast radius of nine sites, found by  <!-- lexicon: allow -->
+`git grep "content/seeds"`. A Bench started the move and immediately hit `tools/census.py`, which  <!-- lexicon: allow -->
+was not in the allowlist because the path is never spelled that way there:
+
+```python
+SEED = Path(__file__).resolve().parent.parent / "content" / "seeds" / "aethryn"  # lexicon: allow
+```
+
+Re-searched properly, **nine source files and twenty test files** build that path from segments, and
+`kernel/cast.py` defines a second copy of the constant. The order was wrong by an order of
+magnitude, and the Bench refusing was the only reason it was caught before thirty files broke.
+
+**The forms a search must cover, at minimum:**
+
+| the thing | spellings to search |
+|---|---|
+| a path | the literal `a/b/c`, the segmented `"a" / "b"`, and any constant that resolves it |
+| an identifier | the name, plus any string form in config, schema keys and CLI text |
+| an environment variable | the read sites, which are few, not the set sites, which are many |
+| a filename | the name, the stem, and any glob that would match it |
+
+**The test of a blast radius is a command that returns nothing when the work is done.** If the
+order cannot state such a command, the allowlist is a guess. WO-BP-2 states its own:
+`git grep -lnE '"content"\s*/\s*"seeds"' -- '*.py' | grep -v ^tests/` must return nothing.  <!-- lexicon: allow -->
+
+**And when a search finds thirty sites where you expected nine, that is usually not a bigger
+chore. It is a finding.** Thirty places knowing one filesystem layout is duplication, and the right
+order consolidates them onto one resolver rather than editing thirty.
 
 ## Before you touch a file
 
