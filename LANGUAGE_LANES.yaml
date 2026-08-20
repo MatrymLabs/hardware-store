@@ -1,0 +1,122 @@
+# The Workshop's omni-code language lanes. Canon MATRYM_WORKSHOP_CANON.md section 16.
+#
+# "A Part does not need every language implementation on day one. However, every language lane
+#  used by the Workshop must be visible. Invisible language use becomes drift."
+#
+# This register is CHECKED AGAINST THE CENSUS, never hand-trusted. `scripts/language_lane_gate.py`
+# reads `scripts/language_census.py` and refuses:
+#   - a language present in the tree with no lane here, which is the drift the canon names
+#   - a lane claiming `governed` that the census measures as only partially inspected, which is a
+#     claim over a property that was never measured
+#
+# Canon section 21 names 33 Rider language and framework lanes. A lane belongs here when the
+# Workshop USES it, not when an IDE supports it. Capability is not the same as installed
+# toolchains, and a register that lists aspiration cannot detect drift.
+#
+# status values:
+#   governed     every repository holding this language inspects it
+#   partial      at least one repository holds it and does not inspect it. A gap, named
+#   ungoverned   present in the tree with no instrument at all
+#   deferred     no code yet; the toolchain arrives with the rung that needs it
+
+version: 1
+owner: Josh Evans, Principal Engineer
+canon: MATRYM_WORKSHOP_CANON.md section 16
+census_instrument: scripts/language_census.py
+measured: 2026-08-13
+
+lanes:
+  - language: python
+    status: partial
+    governance: [ruff, mypy, pytest]
+    note: >-
+      The reference lane. Every Hardware Store Part currently carries a Python reference
+      implementation. One repository holding Python does not inspect it; the census names which.
+
+  - language: shell
+    status: governed
+    governance: [shellcheck]
+    note: Every repository holding shell scripts inspects them.
+
+  - language: typescript
+    status: governed
+    governance: [tsc, biome, build]
+    note: >-
+      The full-stack support lane. Canon section 21 makes it first-class; the console and the two
+      product front ends are the consumers.
+
+  - language: go
+    status: governed
+    governance: [golangci-lint]
+    note: One repository, calibrated.
+
+  - language: rust
+    status: governed
+    governance: [clippy, rustfmt]
+    note: One organ, calibrated. The performance lane when profiling justifies it.
+
+  - language: cpp
+    status: partial
+    governance: [compiler]
+    note: >-
+      Compiled in CI, so the compiler is the type Gate. Never linted. The census names the
+      repository that holds it without inspecting it.
+
+  - language: c
+    status: ungoverned
+    governance: []
+    note: >-
+      NAMED, NOT SOLVED. Three files across two repositories and no instrument on any of them.
+      This lane was invisible until the register was built: the prior doctrine table listed six
+      languages and C was not among them, because that table was measured in one repository. A
+      lane with no instrument is a Known Fault carried in the open, which is the point of the
+      register.
+
+  - language: protobuf
+    status: ungoverned
+    governance: []
+    note: >-
+      NAMED, NOT SOLVED. One file, one repository, no lint. `buf` is the tool if this lane grows a
+      second consumer; it has one, so it is a watch-list entry and not yet work.
+
+  - language: csharp
+    status: deferred
+    governance: []
+    note: >-
+      Zero files. Canon section 21 makes C# and .NET primary for Rider-native full-stack and
+      graphical work, and canon section 20 opens Project Lumenwake on it. Neither has an Active
+      Build, so the toolchain has not arrived. Deferred is the honest status, not a gap.
+
+  - language: gdscript
+    status: deferred
+    governance: []
+    note: Zero files. Arrives with the Godot client if that client is ruled into a Build.
+
+  - language: kotlin
+    status: governed
+    governance: [ktlint]
+    note: >-
+      OPENED 2026-08-13 by RetroForge's Rider projection (codeforge #954) and GOVERNED 2026-08-14
+      (codeforge #958). It spent one day as `ungoverned`, named on the day it opened rather than
+      discovered later, which is the whole reason that status exists.
+      The instrument is ktlint 1.3.1 through the Gradle plugin, wired into `check` with
+      ignoreFailures off, and calibrated: a planted style violation turns the build red.
+      It runs in codeforge CI's `jvm` job on a runner that has never seen Rider, because the
+      projection had been verified only on the maker's Pi and a lane proven on one machine is a
+      claim about that machine.
+      Toolchain needs no sudo: Rider's bundled JBR supplies javac, the tracked Gradle wrapper
+      supplies Gradle and Kotlin. Debian ships gradle 4.4.1 and kotlin 1.3.31, both far too old.
+
+  - language: sql-sqlite
+    status: partial
+    governance: [sqlite gate]
+    note: >-
+      GATED execution environment. SQLite is reached through the SQLAlchemy path; it is not
+      interchangeable with PostgreSQL. No Target Product has shipped through this lane.
+
+  - language: sql-postgres
+    status: partial
+    governance: [postgres gate]
+    note: >-
+      GATED execution environment. PostgreSQL is exercised by the separate CI job; it is not
+      interchangeable with SQLite. No Target Product has shipped through this lane.
