@@ -47,3 +47,30 @@ eight. Naming them does not fix them. It makes them fixable.
 3. Add the lane with its honest status. Do not claim `governed` before an instrument runs.
 4. Where the language consumes a Hardware Store Part, add its lane to
    `OMNI_CODE_PART_MATRIX.yaml`.
+
+## Execution-environment ruling - 2026-08-20
+
+A lane is an execution environment, not a language. A language name alone is not a Gate: the
+programs that parse, migrate, diff, apply DDL, and explain SQL differ by engine.
+
+The measured correction is:
+
+| record | before | after | reason |
+|---|---:|---:|---|
+| lane count | 1 PROVEN / 6 GATED | 1 PROVEN / 7 GATED | SQL was one language label covering two execution environments |
+
+The SQL lanes are distinct and both GATED, neither PROVEN:
+
+- `sql-sqlite` - SQLite through the SQLAlchemy path; its Gate is separate from PostgreSQL.
+- `sql-postgres` - the PostgreSQL CI execution environment; its Gate is separate from SQLite.
+- `sql-sqlserver` is intentionally absent. There is no SQL Server code in the measured tree, and
+the toolchain arrives with the rung that needs it. Declaring it from a research table would be a
+claim without code or a failing Gate.
+
+The measured C/C++ label is corrected to `c`: the tree contains one `.c` file and zero `.cpp`
+files. The JVM lane remains one environment: nine `.kt` and two `.kts` files, zero `.java`. The
+TypeScript lane is not re-statused here; its separate measurement is required before a ruling.
+
+The gate must refuse a declared lane with no corresponding code or execution evidence, and it must
+refuse a PROVEN claim without a shipped Target Product. A passing record names `sql-sqlite` and
+`sql-postgres` separately.
