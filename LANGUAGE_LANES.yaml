@@ -106,3 +106,17 @@ lanes:
       claim about that machine.
       Toolchain needs no sudo: Rider's bundled JBR supplies javac, the tracked Gradle wrapper
       supplies Gradle and Kotlin. Debian ships gradle 4.4.1 and kotlin 1.3.31, both far too old.
+
+  - language: sql-sqlite
+    status: partial
+    governance: [sqlite gate]
+    note: >-
+      GATED execution environment. SQLite is reached through the SQLAlchemy path; it is not
+      interchangeable with PostgreSQL. No Target Product has shipped through this lane.
+
+  - language: sql-postgres
+    status: partial
+    governance: [postgres gate]
+    note: >-
+      GATED execution environment. PostgreSQL is exercised by the separate CI job; it is not
+      interchangeable with SQLite. No Target Product has shipped through this lane.
