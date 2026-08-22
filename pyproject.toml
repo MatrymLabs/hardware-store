@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest==9.1.1", "ruff==0.16.2", "mypy==2.3.0"]
+dev = ["pytest==9.1.1", "ruff==0.16.3", "mypy==2.3.0"]
 
 # The Store is an outward-facing dependency: a stream installs it and runs these
 # verbs in CI. Console scripts are the consume-first / integrity surface.
